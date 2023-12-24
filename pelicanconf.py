@@ -2,6 +2,8 @@ AUTHOR = 'esynr3z'
 SITENAME = 'positive slack'
 SITEURL = ""
 
+OUTPUT_PATH = 'docs/'
+
 PATH = "content"
 
 TIMEZONE = 'Europe/Moscow'
