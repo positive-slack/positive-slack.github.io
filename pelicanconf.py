@@ -4,10 +4,17 @@ SITEURL = ""
 
 OUTPUT_PATH = 'docs/'
 
+ARTICLE_PATHS = ['articles']
+ARTICLE_SAVE_AS = '{slug}.html'
+ARTICLE_URL = '{slug}.html'
+
 PATH = "content"
 
+DEFAULT_DATE = 'fs'
+DEFAULT_DATE_FORMAT = '%d %b %Y'
 TIMEZONE = 'Europe/Moscow'
 
+LOCALE = 'en_US'
 DEFAULT_LANG = 'en'
 
 # Feed generation is usually not desired when developing
@@ -33,7 +40,27 @@ SOCIAL = (
 
 DEFAULT_PAGINATION = False
 
-# Uncomment following line if you want document-relative URLs when developing
-# RELATIVE_URLS = True
-
 THEME = 'attila'
+
+MARKDOWN = {
+    'extension_configs': {
+        # Needed for code syntax highlighting
+        'markdown.extensions.codehilite': {
+            'css_class': 'highlight'
+        },
+        'markdown.extensions.extra': {},
+        'markdown.extensions.meta': {},
+        # This is for enabling the TOC generation
+        'markdown.extensions.toc': {
+            'title': 'Table of Contents',
+        },
+    },
+    'output_format': 'html5',
+}
+
+MENUITEMS = (
+    ('Home', '/'),
+    ('Tags', '/tags.html'),
+    ('Categories', '/categories.html'),
+    ('Archives', '/archives.html'),
+)
