@@ -1,11 +1,15 @@
 # Base configuration
 AUTHOR = 'esynr3z'
 SITENAME = 'positive slack'
-SITESUBTITLE = 'Digital design and verification.'
+SITESUBTITLE = 'Digital design, verification and collaterals'
 SITEURL = 'http://localhost:8000'
 OUTPUT_PATH = 'docs/'
 PATH = "content"
 STATIC_PATHS = ['assets']
+EXTRA_PATH_METADATA = {
+    'assets/robots.txt': {'path': 'robots.txt'},
+    'assets/favicon.ico': {'path': 'favicon.ico'},
+}
 
 # Date and locale
 DEFAULT_DATE = 'fs'
@@ -79,12 +83,23 @@ SOCIAL = (
 # Appearance
 DEFAULT_PAGINATION = False
 THEME = 'attila'
+HOME_COLOR = '#369dbe'
 MENUITEMS = (
     ('Home', '/'),
     ('Tags', f'/{TAGS_URL}'),
     ('Categories', f'/{CATEGORIES_URL}'),
     ('Archives', f'/{ARCHIVES_URL}'),
 )
+CSS_OVERRIDE = ['assets/css/myblog.css']
+SHOW_ARTICLE_MODIFIED_TIME = False
+SHOW_AUTHOR_BIO_IN_ARTICLE = False
+SHOW_CATEGORIES_ON_MENU = False
+SHOW_COMMENTS_COUNT_IN_ARTICLE_SUMMARY = True
+SHOW_CREDITS = True
+SHOW_FULL_ARTICLE_IN_SUMMARY = False
+SHOW_PAGES_ON_MENU = True
+SHOW_SITESUBTITLE_IN_HTML_TITLE = False
+SHOW_TAGS_IN_ARTICLE_SUMMARY = True
 
 # Markdown settings
 MARKDOWN = {
