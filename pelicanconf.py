@@ -118,6 +118,32 @@ MARKDOWN = {
     'output_format': 'html5',
 }
 
+# Plugins
+PLUGIN_PATHS = [
+  'plugins'
+]
+PLUGINS = [
+  'sitemap',
+  'neighbors',
+  'assets',
+  'post_stats',
+]
+
+# Sitemap
+SITEMAP = {
+    'format': 'xml',
+    'priorities': {
+        'articles': 0.5,
+        'indexes': 0.5,
+        'pages': 0.5
+    },
+    'changefreqs': {
+        'articles': 'monthly',
+        'indexes': 'daily',
+        'pages': 'monthly'
+    }
+}
+
 # Feed generation is usually not desired when developing
 FEED_ATOM = None
 FEED_RSS = None

@@ -2,3 +2,4 @@ venv
 docs
 output
 __pycache__
+.vscode

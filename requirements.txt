@@ -1,2 +1,4 @@
 pelican
 pelican[markdown]
+beautifulsoup4
+webassets
