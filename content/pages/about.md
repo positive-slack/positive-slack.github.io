@@ -1,4 +1,5 @@
 Title: About
+Status: published
 
 Welcome! Here I'm just trying to reflect, organize and, of course, share my knowledge.
 

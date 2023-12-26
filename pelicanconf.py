@@ -11,6 +11,7 @@ EXTRA_PATH_METADATA = {
     'assets/favicon.ico': {'path': 'favicon.ico'},
 }
 
+
 # Date and locale
 DEFAULT_DATE = 'fs'
 DEFAULT_DATE_FORMAT = '%d %b %Y'
@@ -33,6 +34,9 @@ AUTHOR_META = {
 ARTICLE_PATHS = ['articles']
 ARTICLE_SAVE_AS = 'articles/{slug}/index.html'
 ARTICLE_URL = 'articles/{slug}/'
+DEFAULT_METADATA = {
+    'status': 'draft',
+}
 
 # Categories
 USE_FOLDER_AS_CATEGORY = False
