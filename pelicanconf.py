@@ -34,6 +34,8 @@ AUTHOR_META = {
 ARTICLE_PATHS = ['articles']
 ARTICLE_SAVE_AS = 'articles/{slug}/index.html'
 ARTICLE_URL = 'articles/{slug}/'
+ARTICLE_LANG_URL = 'articles/{slug}-{lang}'
+ARTICLE_LANG_SAVE_AS = 'articles/{slug}-{lang}/index.html'
 DEFAULT_METADATA = {
     'status': 'draft',
 }
