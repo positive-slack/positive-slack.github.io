@@ -2,6 +2,5 @@ pelican
 pelican[markdown]
 beautifulsoup4
 pelican-webassets
-pelican-series
 pelican-neighbors
 pelican-sitemap

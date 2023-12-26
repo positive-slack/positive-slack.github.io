@@ -130,7 +130,6 @@ PLUGINS = [
   'pelican.plugins.sitemap',
   'pelican.plugins.neighbors',
   'pelican.plugins.webassets',
-  'pelican.plugins.series',
   'post_stats',
 ]
 
