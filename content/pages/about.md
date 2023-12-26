@@ -1,14 +1,14 @@
 Title: About
 Status: published
 
-Welcome! Here I'm just trying to reflect, organize and, of course, share my knowledge.
+Welcome to `positive slack` blog!
 
-My area of expertise is desing and verification of digital hardware (ASIC/FPGA) and all things involved into this (SystemVerilog, UVM, Python, etc.).
+Here, I'm exploring and sharing insights on digital design and verification. At the moment, I'm focused on ASIC verification, so you can expect posts on things like SystemVerilog, UVM, Python, etc. While this is my main area, I might mix it up with some other related topics from time to time.
 
-Main used language here is English, but sometimes there may be articles on Russian.
-
-Feedback and links:
+Links and feedback:
 
 - [My Github](https://github.com/esynr3z)
-- [My Telegram](https://t.me/esynr3z)
+- [Github Discussions](https://github.com/positive-slack/positive-slack.github.io/discussions/categories/feedback) to provide feedback (and store comments to posts)
 - [positive slack](https://t.me/positiveslack) channel on Telegram
+
+P.S. The main language used here is English, but sometimes articles in Russian may appear.
