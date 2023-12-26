@@ -120,12 +120,13 @@ MARKDOWN = {
 
 # Plugins
 PLUGIN_PATHS = [
-  'plugins'
+  'plugins',
 ]
 PLUGINS = [
-  'sitemap',
-  'neighbors',
-  'assets',
+  'pelican.plugins.sitemap',
+  'pelican.plugins.neighbors',
+  'pelican.plugins.webassets',
+  'pelican.plugins.series',
   'post_stats',
 ]
 

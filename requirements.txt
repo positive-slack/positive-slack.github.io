@@ -1,4 +1,7 @@
 pelican
 pelican[markdown]
 beautifulsoup4
-webassets
+pelican-webassets
+pelican-series
+pelican-neighbors
+pelican-sitemap
