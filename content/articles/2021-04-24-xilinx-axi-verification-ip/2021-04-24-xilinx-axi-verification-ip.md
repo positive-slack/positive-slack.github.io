@@ -3,6 +3,7 @@ Date: 2021-04-24 10:20
 Category: Verification
 Tags: AXI, AMBA, FPGA, Xilinx
 Slug: xilinx-axi-verification-ip
+Status: draft
 Summary: Небольшой обзор Xilinx AXI Verification IP - набора инструментов для верификации систем, собранных на AXI шинах. Что в комплекте, как использовать, как симулировать в Vivado и вне, и как тестировать AXI Slave с помощью AXI Master VIP.
 
 Небольшой обзор Xilinx AXI Verification IP - набора инструментов для верификации систем, собранных на AXI шинах.
