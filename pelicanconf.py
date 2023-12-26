@@ -148,6 +148,19 @@ SITEMAP = {
     }
 }
 
+# Comments
+GISCUS_ENABLED = False
+GISCUS_REPO = "positive-slack/positive-slack.github.io"
+GISCUS_REPO_ID = "R_kgDOK9PAQQ"
+GISCUS_CATEGORY = "Posts"
+GISCUS_CATEGORY_ID = "DIC_kwDOK9PAQc4CcALQ"
+GISCUS_MAPPING = "title"
+GISCUS_STRICT = "1"
+GISCUS_REACTIONS_ENABLED = "1"
+GISCUS_INPUT_POSITION = "bottom"
+GISCUS_THEME = "dark"
+GISCUS_LANG = "en"
+
 # Feed generation is usually not desired when developing
 FEED_ATOM = None
 FEED_RSS = None
