@@ -1,3 +1,15 @@
 [submodule "themes/atilla"]
 	path = themes/attila
 	url = git@github.com:positive-slack/pelican-theme-attila.git
+[submodule "plugins/webassets"]
+	path = plugins/webassets
+	url = git@github.com:positive-slack/pelican-plugin-webassets.git
+[submodule "plugins/sitemap"]
+	path = plugins/sitemap
+	url = git@github.com:positive-slack/pelican-plugin-sitemap.git
+[submodule "plugins/neighbors"]
+	path = plugins/neighbors
+	url = git@github.com:positive-slack/pelican-plugin-neighbors.git
+[submodule "plugins/series"]
+	path = plugins/series
+	url = git@github.com:positive-slack/pelican-plugin-series.git
