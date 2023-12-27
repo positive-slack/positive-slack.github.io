@@ -17,3 +17,6 @@ CATEGORY_FEED_ATOM = "feeds/{slug}.atom.xml"
 DELETE_OUTPUT_DIRECTORY = True
 
 GISCUS_ENABLED = True
+
+# Analytics
+GOOGLE_ANALYTICS = "G-7JN7249338"
