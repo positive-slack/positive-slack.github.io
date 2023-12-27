@@ -110,6 +110,7 @@ SHOW_TAGS_IN_ARTICLE_SUMMARY = True
 # Markdown settings
 MARKDOWN = {
     'extension_configs': {
+        'markdown.extensions.admonition': {},
         # Needed for code syntax highlighting
         'markdown.extensions.codehilite': {
             'css_class': 'highlight'
