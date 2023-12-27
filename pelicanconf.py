@@ -1,16 +1,23 @@
-# Base configuration
+from datetime import datetime
+
+# Site information
 AUTHOR = 'esynr3z'
 SITENAME = 'positive slack'
-SITESUBTITLE = 'Digital design, verification and collaterals'
+SITETITLE = SITENAME
+SITESUBTITLE = 'digital design, verification and collaterals'
+SITEDESCRIPTION = SITESUBTITLE
 SITEURL = 'http://localhost:8000'
+SITELOGO = '/assets/logo.jpg'
+
+# Paths and metadata
 OUTPUT_PATH = 'docs/'
 PATH = "content"
 STATIC_PATHS = ['assets']
 EXTRA_PATH_METADATA = {
     'assets/robots.txt': {'path': 'robots.txt'},
     'assets/favicon.ico': {'path': 'favicon.ico'},
+    'assets/css/myblog.css': {'path': 'assets/css/myblog.css'},
 }
-
 
 # Date and locale
 DEFAULT_DATE = 'fs'
@@ -18,24 +25,14 @@ DEFAULT_DATE_FORMAT = '%d %b %Y'
 TIMEZONE = 'Europe/Moscow'
 LOCALE = 'en_US'
 DEFAULT_LANG = 'en'
-
-# Author
-AUTHOR_META = {
-  "esynr3z": {
-    "name": "esynr3z",
-    "image": "assets/avatar.gif",
-    "github": "esynr3z",
-    "website": "https://t.me/esynr3z",
-    "bio": "ASIC verification engineer. Former RTL design engineer. Secretly love embedded systems and smell of flux."
-  }
-}
+OG_LOCALE = LOCALE
 
 # Articles
-ARTICLE_PATHS = ['articles']
-ARTICLE_SAVE_AS = 'articles/{slug}/index.html'
-ARTICLE_URL = 'articles/{slug}/'
-ARTICLE_LANG_URL = 'articles/{slug}-{lang}'
-ARTICLE_LANG_SAVE_AS = 'articles/{slug}-{lang}/index.html'
+ARTICLE_PATHS = ['blog']
+ARTICLE_SAVE_AS = 'blog/{slug}/index.html'
+ARTICLE_URL = 'blog/{slug}/'
+ARTICLE_LANG_URL = 'blog/{slug}-{lang}'
+ARTICLE_LANG_SAVE_AS = 'blog/{slug}-{lang}/index.html'
 DEFAULT_METADATA = {
     'status': 'draft',
 }
@@ -72,31 +69,34 @@ AUTHOR_SAVE_AS = 'author/{slug}/index.html'
 AUTHORS_URL = 'author/'
 AUTHORS_SAVE_AS = 'author/index.html'
 
-# Blogroll
-LINKS = (
-    ("Pelican", "https://getpelican.com/"),
-    ("Python.org", "https://www.python.org/"),
-    ("Jinja2", "https://palletsprojects.com/p/jinja/"),
-    ("You can modify those links in your config file", "#"),
-)
-
-# Social widget
-SOCIAL = (
-    ("You can add links in your config file", "#"),
-    ("Another social link", "#"),
-)
-
 # Appearance
-DEFAULT_PAGINATION = False
-THEME = 'attila'
-HOME_COLOR = '#369dbe'
+THEME = 'flex'
+BROWSER_COLOR = '#369DBE'
+PYGMENTS_STYLE = "monokai"
+THEME_COLOR_AUTO_DETECT_BROWSER_PREFERENCE = True
+THEME_COLOR_ENABLE_USER_OVERRIDE = True
+USE_LESS = False
+CUSTOM_CSS = 'assets/css/myblog.css'
+
+# Page structure
+DEFAULT_PAGINATION = 10
+MAIN_MENU = True
+HOME_HIDE_TAGS = False
 MENUITEMS = (
-    ('Home', '/'),
     ('Tags', f'/{TAGS_URL}'),
     ('Categories', f'/{CATEGORIES_URL}'),
     ('Archives', f'/{ARCHIVES_URL}'),
 )
-CSS_OVERRIDE = ['assets/css/myblog.css']
+SOCIAL = (
+    ("github", "https://github.com/esynr3z"),
+    ("rss", "/feeds/all.atom.xml"),
+)
+LINKS = (
+    ("Github discussions", "https://github.com/positive-slack/positive-slack.github.io/discussions/categories/feedback"),
+    ("Telegram channel [ru]", "https://t.me/positiveslack"),
+)
+LINKS_IN_NEW_TAB = 'external'
+
 SHOW_ARTICLE_MODIFIED_TIME = False
 SHOW_AUTHOR_BIO_IN_ARTICLE = False
 SHOW_CATEGORIES_ON_MENU = False
@@ -163,6 +163,16 @@ GISCUS_REACTIONS_ENABLED = "1"
 GISCUS_INPUT_POSITION = "bottom"
 GISCUS_THEME = "dark"
 GISCUS_LANG = "en"
+
+# License
+CC_LICENSE = {
+    "name": "Creative Commons Attribution-ShareAlike 4.0 International License",
+    "version": "4.0",
+    "slug": "by-sa",
+    "icon": True,
+    "language": "en_US",
+}
+COPYRIGHT_YEAR = datetime.now().year
 
 # Feed generation is usually not desired when developing
 FEED_ATOM = None
