@@ -10,6 +10,7 @@ SITEURL = 'http://localhost:8000'
 SITELOGO = '/assets/logo.jpg'
 
 # Paths and metadata
+RELATIVE_URLS = True
 OUTPUT_PATH = 'docs/'
 PATH = "content"
 STATIC_PATHS = ['assets']
