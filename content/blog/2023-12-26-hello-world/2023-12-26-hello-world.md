@@ -2,7 +2,7 @@ Title: Hello world!
 Date: 2023-12-26 10:20
 Category: General
 Tags: blog
-Slug: hello-world
+Slug: 2023-12-26-hello-world
 Status: draft
 Summary: Hello world post to test Pelican.
 

@@ -2,7 +2,7 @@ Title: positive slack blog recharged
 Date: 2023-12-26 10:20
 Category: General
 Tags: blog
-Slug: positive-slack-blog-recharged
+Slug: 2023-12-27-positive-slack-blog-recharged
 Status: published
 Summary: I refactored my existing blog and move it to Pelican.
 
