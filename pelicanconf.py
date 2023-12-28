@@ -120,23 +120,12 @@ PLUGIN_PATHS = [
 ]
 PLUGINS = [
   'pelican.plugins.neighbors',
+  'pelican.plugins.related_posts',
   'post_stats',
 ]
 
-# Sitemap
-SITEMAP = {
-    'format': 'xml',
-    'priorities': {
-        'articles': 0.5,
-        'indexes': 0.5,
-        'pages': 0.5
-    },
-    'changefreqs': {
-        'articles': 'monthly',
-        'indexes': 'daily',
-        'pages': 'monthly'
-    }
-}
+# Related posts
+RELATED_POSTS_MAX = 3
 
 # Comments
 GISCUS_ENABLED = True
