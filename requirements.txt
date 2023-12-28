@@ -3,3 +3,4 @@ pelican[markdown]
 beautifulsoup4
 pelican-neighbors
 pelican-related-posts
+pelican-series

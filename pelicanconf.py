@@ -121,6 +121,7 @@ PLUGIN_PATHS = [
 PLUGINS = [
   'pelican.plugins.neighbors',
   'pelican.plugins.related_posts',
+  'pelican.plugins.series',
   'post_stats',
 ]
 
