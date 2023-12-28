@@ -98,16 +98,6 @@ LINKS = (
 )
 LINKS_IN_NEW_TAB = 'external'
 
-SHOW_ARTICLE_MODIFIED_TIME = False
-SHOW_AUTHOR_BIO_IN_ARTICLE = False
-SHOW_CATEGORIES_ON_MENU = False
-SHOW_COMMENTS_COUNT_IN_ARTICLE_SUMMARY = True
-SHOW_CREDITS = True
-SHOW_FULL_ARTICLE_IN_SUMMARY = False
-SHOW_PAGES_ON_MENU = True
-SHOW_SITESUBTITLE_IN_HTML_TITLE = False
-SHOW_TAGS_IN_ARTICLE_SUMMARY = True
-
 # Markdown settings
 MARKDOWN = {
     'extension_configs': {
@@ -131,9 +121,7 @@ PLUGIN_PATHS = [
   'plugins',
 ]
 PLUGINS = [
-  'pelican.plugins.sitemap',
   'pelican.plugins.neighbors',
-  'pelican.plugins.webassets',
   'post_stats',
 ]
 
