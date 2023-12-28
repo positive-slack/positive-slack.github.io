@@ -72,8 +72,8 @@ AUTHORS_SAVE_AS = 'author/index.html'
 # Appearance
 THEME = 'flex'
 BROWSER_COLOR = '#369DBE'
-PYGMENTS_STYLE = "monokai"
-THEME_COLOR = 'dark'
+PYGMENTS_STYLE = 'emacs'
+PYGMENTS_STYLE_DARK = 'monokai'
 THEME_COLOR_AUTO_DETECT_BROWSER_PREFERENCE = True
 THEME_COLOR_ENABLE_USER_OVERRIDE = True
 USE_LESS = False
@@ -141,7 +141,7 @@ SITEMAP = {
 }
 
 # Comments
-GISCUS_ENABLED = False
+GISCUS_ENABLED = True
 GISCUS_REPO = "positive-slack/positive-slack.github.io"
 GISCUS_REPO_ID = "R_kgDOK9PAQQ"
 GISCUS_CATEGORY = "Posts"
