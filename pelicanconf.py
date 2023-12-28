@@ -93,7 +93,6 @@ MENUITEMS = (
 SOCIAL = (
     ("github", "https://github.com/esynr3z"),
     ("telegram", "https://t.me/positiveslack"),
-    ("rss", "/feeds/all.atom.xml"),
 )
 LINKS = ()
 LINKS_IN_NEW_TAB = 'external'
