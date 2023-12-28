@@ -90,12 +90,10 @@ MENUITEMS = (
 )
 SOCIAL = (
     ("github", "https://github.com/esynr3z"),
+    ("telegram", "https://t.me/positiveslack"),
     ("rss", "/feeds/all.atom.xml"),
 )
-LINKS = (
-    ("Github discussions", "https://github.com/positive-slack/positive-slack.github.io/discussions/categories/feedback"),
-    ("Telegram channel [ru]", "https://t.me/positiveslack"),
-)
+LINKS = ()
 LINKS_IN_NEW_TAB = 'external'
 
 # Markdown settings

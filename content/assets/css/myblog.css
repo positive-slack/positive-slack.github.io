@@ -39,3 +39,7 @@ section#isso-thread section.auth-section p.post-action input {
 a.btn:hover {
     background-color: #47cefb
 }
+
+a.sc-telegram {
+    background-color: #0088cc;
+}
