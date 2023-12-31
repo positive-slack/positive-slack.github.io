@@ -2,7 +2,7 @@ from datetime import datetime
 
 # Site information
 AUTHOR = 'esynr3z'
-SITENAME = 'positive slack'
+SITENAME = 'positive slack blog'
 SITETITLE = SITENAME
 SITESUBTITLE = 'digital design, verification and collaterals'
 SITEDESCRIPTION = SITESUBTITLE
