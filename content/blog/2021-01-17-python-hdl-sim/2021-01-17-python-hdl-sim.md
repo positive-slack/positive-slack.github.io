@@ -5,6 +5,7 @@ Tags: python
 Slug: 2021-01-17-python-hdl-sim
 Status: published
 Summary: Концепт запуска HDL тестов через Pytest
+Cover: kdpv.jpg
 
 [TOC]
 
