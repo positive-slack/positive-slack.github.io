@@ -96,7 +96,7 @@ SOCIAL = (
     ("github", "https://github.com/esynr3z"),
     ("telegram", "https://t.me/positiveslack"),
     ("comment", "https://github.com/positive-slack/positive-slack.github.io/discussions/categories/feedback"),
-    ("rss", "/blog/feeds/all.atom.xml"),
+    ("rss", "/feeds/all.atom.xml"),
 )
 LINKS = ()
 LINKS_IN_NEW_TAB = 'external'
