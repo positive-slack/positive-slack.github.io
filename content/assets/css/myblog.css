@@ -43,3 +43,11 @@ a.btn:hover {
 a.sc-telegram {
     background-color: #0088cc;
 }
+
+a.sc-question {
+    background-color: #36be88;
+}
+
+a.sc-comment {
+    background-color: #000000;
+}

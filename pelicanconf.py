@@ -49,6 +49,7 @@ CATEGORIES_SAVE_AS = 'category/index.html'
 # Pages
 PAGE_URL = 'pages/{slug}/'
 PAGE_SAVE_AS = 'pages/{slug}/index.html'
+DISPLAY_PAGES_ON_MENU = False
 
 # Archives
 ARCHIVES_URL = 'archive/'
@@ -91,8 +92,11 @@ MENUITEMS = (
     ('Archives', f'/{ARCHIVES_URL}'),
 )
 SOCIAL = (
+    ("question", "/pages/about/"),
     ("github", "https://github.com/esynr3z"),
     ("telegram", "https://t.me/positiveslack"),
+    ("comment", "https://github.com/positive-slack/positive-slack.github.io/discussions/categories/feedback"),
+    ("rss", "/blog/feeds/all.atom.xml"),
 )
 LINKS = ()
 LINKS_IN_NEW_TAB = 'external'
