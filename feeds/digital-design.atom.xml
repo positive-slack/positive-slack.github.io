@@ -1,0 +1,686 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>positive slack blog - Digital design</title><link href="https://positive-slack.github.io/" rel="alternate"></link><link href="https://positive-slack.github.io/feeds/digital-design.atom.xml" rel="self"></link><id>https://positive-slack.github.io/</id><updated>2024-01-27T11:40:56+03:00</updated><subtitle>digital design, verification and collaterals</subtitle><entry><title>FTDI USB-FIFO или режим FT245</title><link href="https://positive-slack.github.io/blog/2021-07-16-ftdi-ft245/" rel="alternate"></link><published>2021-07-16T10:20:00+03:00</published><updated>2024-01-27T11:40:56+03:00</updated><author><name>esynr3z</name></author><id>tag:positive-slack.github.io,2021-07-16:/blog/2021-07-16-ftdi-ft245/</id><summary type="html">&lt;p&gt;Собрал и проверил на практике инструменты для работы с USB-FIFO чипами от FTDI на FPGA.&lt;/p&gt;</summary><content type="html">&lt;div class="toc"&gt;&lt;span class="toctitle"&gt;Table of Contents&lt;/span&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href="#ftdi-usb-fifo"&gt;FTDI USB-FIFO&lt;/a&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href="#_1"&gt;Железо&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#_2"&gt;Софт&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#_3"&gt;Документация&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;a href="#proto245"&gt;Проект proto245&lt;/a&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href="#proto245a"&gt;proto245a&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#proto245s"&gt;proto245s&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;a href="#ft2232h-de10-lite"&gt;Пример с FT2232H + DE10-Lite&lt;/a&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href="#ftd2xx-d2xx"&gt;ftd2xx (D2xx)&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#pylibftdi-libftdi"&gt;pylibftdi (libftdi)&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#ftdi1-libftdi"&gt;ftdi1 (libftdi)&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#pyusb-libusb"&gt;pyusb (libusb)&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;a href="#ft600"&gt;Про FT600&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;p&gt;Последнее время я довольно много работал с чипами FTDI в качестве переходников USB-FIFO для FPGA: FT232H, FT2232H, FT600, асинхронный и синхронный режимы FT245, самописные ядра на SystemVerilog, ответное ПО на Python - вот это вот всё. Собралась некоторая критическая масса заметок, которые решил причесать и собрать в пост.&lt;/p&gt;
+&lt;p&gt;&lt;img alt="system" src="https://positive-slack.github.io/blog/2021-07-16-ftdi-ft245/system.png"&gt;&lt;/p&gt;
+&lt;h2 id="ftdi-usb-fifo"&gt;FTDI USB-FIFO&lt;/h2&gt;
+&lt;h3 id="_1"&gt;Железо&lt;/h3&gt;
+&lt;p&gt;Насколько я понимаю, линейка этих переходников  развивалась у FTDI так: &lt;a href="https://www.ftdichip.cn/Products/ICs/FT8U245AM.htm"&gt;FT8U245AM&lt;/a&gt; → &lt;a href="https://ftdichip.com/products/ft245bl/"&gt;FT245B&lt;/a&gt; → &lt;a href="https://ftdichip.com/products/ft245rq/"&gt;FT245R&lt;/a&gt;. Все они реализуют режим асинхронной параллельной шины, позволяющей обмениваться данными со скоростью до 1 МБ/с (USB 2.0 FullSpeed).&lt;/p&gt;
+&lt;p&gt;&lt;img alt="ft245_async" src="https://positive-slack.github.io/blog/2021-07-16-ftdi-ft245/ft245_async.png"&gt;&lt;/p&gt;
+&lt;p&gt;Затем у FTDI начали появляться мультиинтерфейсные чипы типа &lt;a href="https://ftdichip.com/products/ft232hq/"&gt;FT232H&lt;/a&gt;/&lt;a href="https://ftdichip.com/products/ft2232hq/"&gt;FT2232H&lt;/a&gt; в стиле "переходник USB во что-угодно". И так как протокол, реализующий FIFO, там был фактически такой же как и у предшественников, то и назвали его соответственно - FT245.  Однако, скорости возросли вместе с переходом на USB 2.0 HighSpeed, а значит надо было вводить ещё и синхронный режим, чтобы выжать из шины ещё больше. Поэтому стало 2 вида протоколов: асинхронный (легаси, но уже до 8 МБ/с) и синхронный (новый, до 40 МБ/с) FIFO.&lt;/p&gt;
+&lt;p&gt;&lt;img alt="ft245_sync" src="https://positive-slack.github.io/blog/2021-07-16-ftdi-ft245/ft245_sync.png"&gt;&lt;/p&gt;
+&lt;p&gt;В последних чипах с USB 3.0 SuperSpeed (&lt;a href="https://ftdichip.com/products/ft601q-b/"&gt;FT60xQ&lt;/a&gt;) асинхронный режим отвалился совсем, и остался только синхронный 245  (200-400 МБ/с). Правда с небольшой модификацией - шиной BE (byte enable), т.к. размерность шины данных увеличилась с 8 до 16/32 бит.&lt;/p&gt;
+&lt;p&gt;&lt;img alt="ft245_sync" src="https://positive-slack.github.io/blog/2021-07-16-ftdi-ft245/ft245_ft600.png"&gt;&lt;/p&gt;
+&lt;p&gt;На текущий момент мы имеем следующий ассортимент чипов:&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th style="text-align: left;"&gt;FTDI Chip&lt;/th&gt;
+&lt;th style="text-align: left;"&gt;USB Speed&lt;/th&gt;
+&lt;th style="text-align: left;"&gt;Asynchronous FIFO&lt;/th&gt;
+&lt;th style="text-align: left;"&gt;Synchronous FIFO&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left;"&gt;&lt;a href="https://ftdichip.com/products/ft245rq/"&gt;FT245R&lt;/a&gt;&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;FullSpeed&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;↔️ 1MB/s&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;❌&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left;"&gt;&lt;a href="https://ftdichip.com/products/ft240xs/"&gt;FT240X&lt;/a&gt;&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;FullSpeed&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;↔️ 1MB/s&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;❌&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left;"&gt;&lt;a href="https://ftdichip.com/products/ft2232d/"&gt;FT2232D&lt;/a&gt;&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;FullSpeed&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;↔️ 1MB/s&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;❌&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left;"&gt;&lt;a href="https://ftdichip.com/products/ft232hq/"&gt;FT232H&lt;/a&gt;&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;HighSpeed&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;↔️ 8MB/s&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;↔️ 40MB/s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left;"&gt;&lt;a href="https://ftdichip.com/products/ft2232hq/"&gt;FT2232H&lt;/a&gt;&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;HighSpeed&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;↔️ 8MB/s&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;↔️ 40MB/s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left;"&gt;&lt;a href="https://ftdichip.com/products/ft232hp/"&gt;FT232HP&lt;/a&gt;/&lt;a href="https://ftdichip.com/products/ft233hp/"&gt;FT233HP&lt;/a&gt;&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;HighSpeed&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;↔️ 8MB/s&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;↔️ 40MB/s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left;"&gt;&lt;a href="https://ftdichip.com/products/ft2232hp/"&gt;FT2232HP&lt;/a&gt;/&lt;a href="https://ftdichip.com/products/ft2233hp/"&gt;FT2233HP&lt;/a&gt;&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;HighSpeed&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;↔️ 8MB/s&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;↔️ 40MB/s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left;"&gt;&lt;a href="https://ftdichip.com/products/ft600q-b/"&gt;FT600Q&lt;/a&gt;&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;SuperSpeed&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;❌&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;↔️ 200MB/s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left;"&gt;&lt;a href="https://ftdichip.com/products/ft601q-b/"&gt;FT601Q&lt;/a&gt;&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;SuperSpeed&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;❌&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;↔️ 400MB/s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left;"&gt;&lt;a href="https://ftdichip.com/products/ft602q-b/"&gt;FT602Q&lt;/a&gt;&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;SuperSpeed&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;❌&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;↔️ 400MB/s&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;В итоге,  если внимательно посмотреть на все времянки и формализовать работу с FT чипами со стороны ПЛИС, то фактически нужно только 2 ядра - одно для асинхронного протокола 245, другое - для синхронного.&lt;/p&gt;
+&lt;h3 id="_2"&gt;Софт&lt;/h3&gt;
+&lt;p&gt;У меня ОС - Ubuntu 20.04, и основной язык прикладного софта - Python.&lt;/p&gt;
+&lt;p&gt;В этом контексте я попытался найти все доступные на текущий момент библиотеки. На самом деле их даже чуть больше, но некоторые библиотеки верхнего уровня заточены только под режимы serial или bitbang, которые мне не нужны.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href="https://github.com/snmishra/ftd2xx"&gt;snmishra/ftd2xx&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://github.com/eblot/pyftdi"&gt;eblot/pyftdi&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://github.com/pyusb/pyusb"&gt;pyusb&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://github.com/codedstructure/pylibftdi"&gt;codedstructure/pylibftdi&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://github.com/libusb/libusb"&gt;libusb&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://www.intra2net.com/en/developer/libftdi/index.php"&gt;libftdi&lt;/a&gt; (ftdi1 - внутри)&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://ftdichip.com/drivers/d2xx-drivers/"&gt;d2xx&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://ftdichip.com/drivers/d3xx-drivers/"&gt;d3xx&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://ftdichip.com/software-examples/ft600-601-software-examples/"&gt;ftd3xx&lt;/a&gt; (SuperSpeed Python Example)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Нейминг библиотек не отличается особым разнообразием - почти все имена состоят из одного набора корней: "py", "usb", "ftdi", "lib". Надеюсь картинка тут поможет.&lt;/p&gt;
+&lt;p&gt;&lt;img alt="ftdi_libs" src="https://positive-slack.github.io/blog/2021-07-16-ftdi-ft245/ftdi_libs.png"&gt;&lt;/p&gt;
+&lt;p&gt;В целом, тут получается 2 пути - либо используем драйвер от производителя, либо используем libusb с подошедшей обёрткой. Вроде всё просто.&lt;/p&gt;
+&lt;h3 id="_3"&gt;Документация&lt;/h3&gt;
+&lt;p&gt;Просто список источников по теме, которые будут полезны (ну кроме даташитов, очевидно):&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href="https://ftdichip.com/wp-content/uploads/2020/08/D2XX_Programmers_GuideFT_000071.pdf"&gt;D2XX Programmers Guide&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://ftdichip.com/wp-content/uploads/2020/08/TN_167_FIFO_Basics.pdf"&gt;TN167 FIFO Basics&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://ftdichip.com/wp-content/uploads/2020/08/AN_130_FT2232H_Used_In_FT245-Synchronous-FIFO-Mode.pdf"&gt;AN130 FT2232H Used In FT245 Synchronous FIFO Mode&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://ftdichip.com/wp-content/uploads/2020/07/AN_379-D3xx-Programmers-Guide-1.pdf"&gt;AN379 D3xx Programmers Guide&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://ftdichip.com/wp-content/uploads/2020/07/AN_386-FTDI-FT600-Maximize-Performance.pdf"&gt;AN386 FTDI FT600 Maximize Performance&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://ftdichip.com/wp-content/uploads/2020/07/AN_412_FT600_FT601-USB-Bridge-chips-Integration.pdf"&gt;AN412 FT600_FT601 USB Bridge chips Integration&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://www.ftdicommunity.com/index.php?topic=54.msg1901#msg1901"&gt;FT600/601 Question about maximum data rate (practical)&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id="proto245"&gt;Проект proto245&lt;/h2&gt;
+&lt;p&gt;Ядра для обоих видов протоколов написаны на SystemVerilog и лежат в репозитории &lt;a href="https://github.com/esynr3z/proto245"&gt;proto245&lt;/a&gt; на Github.&lt;/p&gt;
+&lt;p&gt;Конечно, я не первый кто пишет подобные корки:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href="https://github.com/alexforencich/verilog-ft245"&gt;alexforencich/verilog-ft245&lt;/a&gt; (aсинхронный)&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://github.com/ultraembedded/core_ftdi_bridge"&gt;ultraembedded/core_ftdi_bridge&lt;/a&gt; (aсинхронный/синхронный)&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://github.com/ultraembedded/core_ft60x_axi"&gt;ultraembedded/core_ft60x_axi&lt;/a&gt; (синхронный)&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://github.com/6thimage/FT245_interface"&gt;6thimage/FT245_interface&lt;/a&gt; (aсинхронный)&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://github.com/WangXuan95/FTDI-245fifo-interface"&gt;WangXuan95/FTDI-245fifo-interface&lt;/a&gt; (синхронный)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;У всех есть свои особенности реализации, но самый главный фатальный недостаток - они &lt;a href="https://en.wikipedia.org/wiki/Not_invented_here"&gt;Not_Invented_Here&lt;/a&gt; =). Так что раз погружаться в тему, так с головой.&lt;/p&gt;
+&lt;h3 id="proto245a"&gt;proto245a&lt;/h3&gt;
+&lt;p&gt;Реализует асинхронный FT245 с одной стороны, и предоставляет 2 простых FIFO интерфейса с другой (приём и передача). Умышленно не стал вносить внутрь какой-нибудь AXI-Stream, т.к. накрутить его поверх не составит проблем, ну и мне нужны были именно "сырые" FIFO. Возможно, когда-нибудь я это исправлю.&lt;/p&gt;
+&lt;p&gt;Времянки сигналов &lt;code&gt;RD#&lt;/code&gt; и &lt;code&gt;WR#&lt;/code&gt; конфигурируются с помощью параметров. Плюс можно настроить как размеры буферов FIFO на приём и передачу, так и их вид, в зависимости от того сколько тактовых доменов будет в дизайне.&lt;/p&gt;
+&lt;p&gt;Иерархия модулей:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;Single clock domain:
+proto245a (proto245a.sv)
+├── rxfifo (fifo_sync.sv)
+│   └── dpram (dpram.sv)
+└── txfifo (fifo_sync.sv)
+    └── dpram (dpram.sv)
+
+Multiple clock domains:
+proto245a (proto245a.sv)
+├── rxfifo (fifo_async.sv)
+│   └── dpram (dpram.sv)
+└── txfifo (fifo_async.sv)
+    └── dpram (dpram.sv)
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Времянки интерфейсов FIFO, уходящих внутрь ПЛИС ниже.&lt;/p&gt;
+&lt;p&gt;&lt;img alt="fifos" src="https://positive-slack.github.io/blog/2021-07-16-ftdi-ft245/fifos.png"&gt;&lt;/p&gt;
+&lt;p&gt;Больше про блок особенно рассказывать нечего, разве что сигнал Send Immediate / Wake Up signal (&lt;code&gt;SIWU&lt;/code&gt;) не используется и находится в неактивном состоянии.&lt;/p&gt;
+&lt;h3 id="proto245s"&gt;proto245s&lt;/h3&gt;
+&lt;p&gt;Реализует синхронный FT245 с одной стороны, и предоставляет 2 простых FIFO интерфейса с другой (приём и передача).&lt;/p&gt;
+&lt;p&gt;Тут настроек несколько больше. Можно выбрать нужную ширину данных, настроить FIFO, как и ранее. Плюс, т.к. обмен идёт пачками/бёрстами/bursts данных, то есть настройки размеров бёрста, условий для старта приемопередачи, в зависимости от уровня заполнения FIFO, и паузы между бёрстами. Это позволяет провести тонкий тюнинг производительности, при желании.&lt;/p&gt;
+&lt;p&gt;Иерархия модулей:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;Single clock domain:
+proto245s (proto245s.sv)
+├── rxfifo (fifo_sync.sv)
+│   └── dpram (dpram.sv)
+├── txfifo (fifo_sync.sv)
+│   └── dpram (dpram.sv)
+└── txovrbuf (fifo_sync.sv)
+    └── dpram (dpram.sv)
+
+Multiple clock domains:
+proto245s (proto245s.sv)
+├── rxfifo (fifo_async.sv)
+│   └── dpram (dpram.sv)
+├── txfifo (fifo_async.sv)
+│   └── dpram (dpram.sv)
+└── txovrbuf (fifo_sync.sv)
+    └── dpram (dpram.sv)
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;FIFO, смотрящие внутрь ПЛИС, работают точно так же как и в proto245a.&lt;/p&gt;
+&lt;p&gt;Сигнал &lt;code&gt;SIWU&lt;/code&gt; (чипы FT2xxx) не используется - находится в неактивном состоянии.&lt;/p&gt;
+&lt;p&gt;Сигналы &lt;code&gt;BE&lt;/code&gt; (чипы FT60x) пока не используются тоже - по чтению игнорируются, по записи - там всегда единички. Поэтому транзакции должны быть выровнены пословно.&lt;/p&gt;
+&lt;p&gt;Кстати надо наверное ещё упомянуть, что в синхронном режиме существует проблема потери данных из-за "конвеерности", возникающая, если поставить триггеры в пути контрольных сигналов и данных. Т.е. когда происходит чтение из FT, то пока сигнал о заполненности нашего приемного FIFO уйдет в FT-чип и тот остановит выдачу данных, мы можем потерять пару последних слов (RX FIFO overflow). Почти тоже самое и при передаче - пока сигнал от FT о заполненности буфера дойдет до нас и мы остановим чтение нашего передающего FIFO, то потеряем слова уже вычитанные из него , но ещё не отправленные наружу (TX FIFO overrun).&lt;/p&gt;
+&lt;p&gt;В реализациях с github обходят это по разному, вплоть до полного отсутствия триггеров - сигналы с IO идут сразу на BRAM внутри FIFO. У меня триггеры по входам-выходам имеются, и проблема overflow решается за счёт введения состояния "почти полный", а проблема overrun с помощью микрофифо на несколько элементов.&lt;/p&gt;
+&lt;h2 id="ft2232h-de10-lite"&gt;Пример с FT2232H + DE10-Lite&lt;/h2&gt;
+&lt;p&gt;Для меня основной интерес представлял именно синхронный режим, поэтому дальше будет только о нём. Но асинхронный тоже работает, и в репозитории можно найти информацию как его запустить.&lt;/p&gt;
+&lt;p&gt;В качестве тестового стенда использовалась плата с &lt;a href="https://aliexpress.ru/item/4000352777336.html"&gt;FT2232H&lt;/a&gt; и отладка &lt;a href="https://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&amp;amp;No=1021"&gt;DE10-Lite&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;img alt="devboards" src="https://positive-slack.github.io/blog/2021-07-16-ftdi-ft245/devboards.png"&gt;&lt;/p&gt;
+&lt;p&gt;Соединялись они через DIY-плату переходник. Список соединений в таблице:&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th style="text-align: left;"&gt;FT Pin&lt;/th&gt;
+&lt;th style="text-align: left;"&gt;FT Function&lt;/th&gt;
+&lt;th style="text-align: left;"&gt;GPIO J1 Header&lt;/th&gt;
+&lt;th style="text-align: left;"&gt;RTL Top&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left;"&gt;ADBUS0&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;D0&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;gpio[8]&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;ft_data[0]&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left;"&gt;ADBUS1&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;D1&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;gpio[10]&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;ft_data[1]&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left;"&gt;ADBUS2&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;D2&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;gpio[12]&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;ft_data[2]&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left;"&gt;ADBUS3&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;D3&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;gpio[14]&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;ft_data[3]&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left;"&gt;ADBUS4&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;D4&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;gpio[16]&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;ft_data[4]&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left;"&gt;ADBUS5&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;D5&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;gpio[18]&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;ft_data[5]&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left;"&gt;ADBUS6&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;D6&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;gpio[20]&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;ft_data[6]&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left;"&gt;ADBUS7&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;D7&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;gpio[22]&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;ft_data[7]&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left;"&gt;ACBUS0&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;RXF#&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;gpio[24]&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;ft_rxfn&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left;"&gt;ACBUS1&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;TXE#&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;gpio[26]&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;ft_txen&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left;"&gt;ACBUS2&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;RD#&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;gpio[28]&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;ft_rdn&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left;"&gt;ACBUS3&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;WR#&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;gpio[30]&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;ft_wrn&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left;"&gt;ACBUS4&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;SIWU&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;gpio[32]&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;ft_siwu&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left;"&gt;ACBUS5&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;CLKOUT&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;gpio[2]&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;ft_clk&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left;"&gt;ACBUS6&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;OE#&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;gpio[34]&lt;/td&gt;
+&lt;td style="text-align: left;"&gt;ft_oen&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;h3 id="ftd2xx-d2xx"&gt;ftd2xx (D2xx)&lt;/h3&gt;
+&lt;p&gt;Начнем с драйверов от производителя &lt;a href="https://ftdichip.com/drivers/d2xx-drivers/"&gt;D2XX&lt;/a&gt;. Они ведь скорее всего хорошо работают из коробки, верно?&lt;/p&gt;
+&lt;p&gt;Скачиваем архив и идём по инструкции из ReadMe.txt в нём&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="m"&gt;1&lt;/span&gt;.&lt;span class="w"&gt;  &lt;/span&gt;tar&lt;span class="w"&gt; &lt;/span&gt;xfvz&lt;span class="w"&gt; &lt;/span&gt;libftd2xx-x86_64-1.4.24.tgz
+&lt;span class="m"&gt;2&lt;/span&gt;.&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="nb"&gt;cd&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;build
+&lt;span class="m"&gt;3&lt;/span&gt;.&lt;span class="w"&gt;  &lt;/span&gt;sudo&lt;span class="w"&gt; &lt;/span&gt;-s&lt;span class="w"&gt; &lt;/span&gt;
+&lt;span class="m"&gt;4&lt;/span&gt;.&lt;span class="w"&gt;  &lt;/span&gt;cp&lt;span class="w"&gt; &lt;/span&gt;libftd2xx.*&lt;span class="w"&gt; &lt;/span&gt;/usr/local/lib
+&lt;span class="m"&gt;5&lt;/span&gt;.&lt;span class="w"&gt;  &lt;/span&gt;chmod&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;0755&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;/usr/local/lib/libftd2xx.so.1.4.24
+&lt;span class="m"&gt;6&lt;/span&gt;.&lt;span class="w"&gt;  &lt;/span&gt;ln&lt;span class="w"&gt; &lt;/span&gt;-sf&lt;span class="w"&gt; &lt;/span&gt;/usr/local/lib/libftd2xx.so.1.4.24&lt;span class="w"&gt; &lt;/span&gt;/usr/local/lib/libftd2xx.so
+&lt;span class="m"&gt;7&lt;/span&gt;.&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="nb"&gt;cd&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;..
+&lt;span class="w"&gt;    &lt;/span&gt;cp&lt;span class="w"&gt; &lt;/span&gt;ftd2xx.h&lt;span class="w"&gt;  &lt;/span&gt;/usr/local/include
+&lt;span class="w"&gt;    &lt;/span&gt;cp&lt;span class="w"&gt; &lt;/span&gt;WinTypes.h&lt;span class="w"&gt;  &lt;/span&gt;/usr/local/include
+&lt;span class="m"&gt;8&lt;/span&gt;.&lt;span class="w"&gt;  &lt;/span&gt;ldconfig&lt;span class="w"&gt; &lt;/span&gt;-v
+&lt;span class="m"&gt;9&lt;/span&gt;.&lt;span class="w"&gt;  &lt;/span&gt;&lt;span class="nb"&gt;exit&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Устанавливаем питоний пакет &lt;a href="https://pypi.org/project/ftd2xx/"&gt;ftd2xx&lt;/a&gt; - это довольно тонкая обёртка над либами от FTDI.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="n"&gt;python3&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;m&lt;/span&gt; &lt;span class="n"&gt;pip&lt;/span&gt; &lt;span class="n"&gt;install&lt;/span&gt; &lt;span class="n"&gt;ftd2xx&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Создаём скрипт &lt;code&gt;test_ftd2xx.py&lt;/code&gt; и пытаемся посмотреть доступные устройства&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;ftd2xx&lt;/span&gt; &lt;span class="k"&gt;as&lt;/span&gt; &lt;span class="nn"&gt;ft&lt;/span&gt;
+
+&lt;span class="nb"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;ft&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;listDevices&lt;/span&gt;&lt;span class="p"&gt;())&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Упс&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;$&lt;span class="w"&gt; &lt;/span&gt;./test_ftd2xx.py
+Traceback&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;most&lt;span class="w"&gt; &lt;/span&gt;recent&lt;span class="w"&gt; &lt;/span&gt;call&lt;span class="w"&gt; &lt;/span&gt;last&lt;span class="o"&gt;)&lt;/span&gt;:
+&lt;span class="w"&gt;  &lt;/span&gt;File&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;./proto245_ftd2xx.py&amp;quot;&lt;/span&gt;,&lt;span class="w"&gt; &lt;/span&gt;line&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;3&lt;/span&gt;,&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;in&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&amp;lt;module&amp;gt;
+&lt;span class="w"&gt;    &lt;/span&gt;import&lt;span class="w"&gt; &lt;/span&gt;ftd2xx&lt;span class="w"&gt; &lt;/span&gt;as&lt;span class="w"&gt; &lt;/span&gt;ft
+&lt;span class="w"&gt;  &lt;/span&gt;File&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;/home/esynr3z/.local/lib/python3.8/site-packages/ftd2xx/__init__.py&amp;quot;&lt;/span&gt;,&lt;span class="w"&gt; &lt;/span&gt;line&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;12&lt;/span&gt;,&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;in&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&amp;lt;module&amp;gt;
+&lt;span class="w"&gt;    &lt;/span&gt;from&lt;span class="w"&gt; &lt;/span&gt;.ftd2xx&lt;span class="w"&gt; &lt;/span&gt;import&lt;span class="w"&gt; &lt;/span&gt;*
+&lt;span class="w"&gt;  &lt;/span&gt;File&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;/home/esynr3z/.local/lib/python3.8/site-packages/ftd2xx/ftd2xx.py&amp;quot;&lt;/span&gt;,&lt;span class="w"&gt; &lt;/span&gt;line&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;15&lt;/span&gt;,&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;in&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&amp;lt;module&amp;gt;
+&lt;span class="w"&gt;    &lt;/span&gt;from&lt;span class="w"&gt; &lt;/span&gt;.&lt;span class="w"&gt; &lt;/span&gt;import&lt;span class="w"&gt; &lt;/span&gt;_ftd2xx_linux&lt;span class="w"&gt; &lt;/span&gt;as&lt;span class="w"&gt; &lt;/span&gt;_ft
+&lt;span class="w"&gt;  &lt;/span&gt;File&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;/home/esynr3z/.local/lib/python3.8/site-packages/ftd2xx/_ftd2xx_linux.py&amp;quot;&lt;/span&gt;,&lt;span class="w"&gt; &lt;/span&gt;line&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;1623&lt;/span&gt;,&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;in&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&amp;lt;module&amp;gt;
+&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="nv"&gt;stime&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;_libraries&lt;span class="o"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;libftd2xx.so&amp;#39;&lt;/span&gt;&lt;span class="o"&gt;]&lt;/span&gt;.stime
+&lt;span class="w"&gt;  &lt;/span&gt;File&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;/usr/lib/python3.8/ctypes/__init__.py&amp;quot;&lt;/span&gt;,&lt;span class="w"&gt; &lt;/span&gt;line&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;386&lt;/span&gt;,&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;in&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;__getattr__
+&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="nv"&gt;func&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;self.__getitem__&lt;span class="o"&gt;(&lt;/span&gt;name&lt;span class="o"&gt;)&lt;/span&gt;
+&lt;span class="w"&gt;  &lt;/span&gt;File&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;/usr/lib/python3.8/ctypes/__init__.py&amp;quot;&lt;/span&gt;,&lt;span class="w"&gt; &lt;/span&gt;line&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;391&lt;/span&gt;,&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;in&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;__getitem__
+&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="nv"&gt;func&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;self._FuncPtr&lt;span class="o"&gt;((&lt;/span&gt;name_or_ordinal,&lt;span class="w"&gt; &lt;/span&gt;self&lt;span class="o"&gt;))&lt;/span&gt;
+AttributeError:&lt;span class="w"&gt; &lt;/span&gt;/usr/local/lib/libftd2xx.so:&lt;span class="w"&gt; &lt;/span&gt;undefined&lt;span class="w"&gt; &lt;/span&gt;symbol:&lt;span class="w"&gt; &lt;/span&gt;stime
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Гугление говорит о том, начиная с определенной версии ядра, этой функции больше нет. Хехе, в процессе поисков наткнулся даже на &lt;a href="https://github.com/abhra0897/gowin-easy-linux/issues/1"&gt;такое&lt;/a&gt;:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="nx"&gt;GoWin&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;programmer&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;the&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;tool&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;for&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;uploading&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;the&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;bitstream&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;to&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;the&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;FPGA&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;span class="nx"&gt;doesn&lt;/span&gt;&lt;span class="err"&gt;&amp;#39;&lt;/span&gt;&lt;span class="nx"&gt;t&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;work&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;on&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;Linux&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;kernel&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;&amp;gt;=&lt;/span&gt;&lt;span class="mf"&gt;5.4&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;
+&lt;span class="nx"&gt;Shows&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;attribute&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;error&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;libftd2xx&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;so&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kc"&gt;undefined&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;symbol&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;stime&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;
+
+&lt;span class="nx"&gt;The&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;only&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;way&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;to&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;upload&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;bitstream&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;is&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;using&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;open&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="nx"&gt;source&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;project&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;OpenFPGALoader&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Чтож, не использовать драйвер от FTDI тоже выход.&lt;/p&gt;
+&lt;p&gt;Ладно, просто попробуем закоментировать &lt;code&gt;stime&lt;/code&gt; в  &lt;code&gt;blabla/python3.8/site-packages/ftd2xx/_ftd2xx_linux.py&lt;/code&gt; (судя по всему, это автоматически сгенерированная обёртка).&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="n"&gt;stime&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;_libraries&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;libftd2xx.so&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;stime&lt;/span&gt;
+&lt;span class="n"&gt;stime&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;restype&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;c_int&lt;/span&gt;
+&lt;span class="c1"&gt;# stime(__when)&lt;/span&gt;
+&lt;span class="n"&gt;stime&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;argtypes&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;POINTER&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;time_t&lt;/span&gt;&lt;span class="p"&gt;)]&lt;/span&gt;
+&lt;span class="n"&gt;stime&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="vm"&gt;__doc__&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; \
+&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="sd"&gt;&amp;quot;&amp;quot;&amp;quot;int stime(unknown * __when)&lt;/span&gt;
+&lt;span class="sd"&gt;/usr/include/time.h:294&amp;quot;&amp;quot;&amp;quot;&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Запускаем снова и теперь видим устройства&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;$&lt;span class="w"&gt; &lt;/span&gt;./test_ftd2xx.py&lt;span class="w"&gt; &lt;/span&gt;
+&lt;span class="o"&gt;[&lt;/span&gt;b&lt;span class="s1"&gt;&amp;#39;FT3C8Z0AA&amp;#39;&lt;/span&gt;,&lt;span class="w"&gt; &lt;/span&gt;b&lt;span class="s1"&gt;&amp;#39;FT3C8Z0AB&amp;#39;&lt;/span&gt;&lt;span class="o"&gt;]&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Попытаемся подключиться к чипу и сбросить его&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;ftd2xx&lt;/span&gt; &lt;span class="k"&gt;as&lt;/span&gt; &lt;span class="nn"&gt;ft&lt;/span&gt;
+
+&lt;span class="k"&gt;try&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+    &lt;span class="n"&gt;dev_id&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;ft&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;listDevices&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;index&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="sa"&gt;b&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;FT3C8Z0AA&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="k"&gt;except&lt;/span&gt; &lt;span class="ne"&gt;ValueError&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+    &lt;span class="k"&gt;raise&lt;/span&gt; &lt;span class="ne"&gt;Exception&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;No board found!&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;dev&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;ft&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;open&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;dev_id&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;dev&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;resetDevice&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;span class="n"&gt;dev&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;close&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;span class="nb"&gt;print&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;Done!&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Что-то пошло не так&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;$&lt;span class="w"&gt; &lt;/span&gt;./test_ftd2xx.py&lt;span class="w"&gt; &lt;/span&gt;
+Traceback&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;most&lt;span class="w"&gt; &lt;/span&gt;recent&lt;span class="w"&gt; &lt;/span&gt;call&lt;span class="w"&gt; &lt;/span&gt;last&lt;span class="o"&gt;)&lt;/span&gt;:
+&lt;span class="w"&gt;  &lt;/span&gt;File&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;./proto245_ftd2xx.py&amp;quot;&lt;/span&gt;,&lt;span class="w"&gt; &lt;/span&gt;line&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;12&lt;/span&gt;,&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;in&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&amp;lt;module&amp;gt;
+&lt;span class="w"&gt;    &lt;/span&gt;&lt;span class="nv"&gt;dev&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;ft.open&lt;span class="o"&gt;(&lt;/span&gt;dev_id&lt;span class="o"&gt;)&lt;/span&gt;
+&lt;span class="w"&gt;  &lt;/span&gt;File&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;/home/esynr3z/.local/lib/python3.8/site-packages/ftd2xx/ftd2xx.py&amp;quot;&lt;/span&gt;,&lt;span class="w"&gt; &lt;/span&gt;line&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;100&lt;/span&gt;,&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;in&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;open
+&lt;span class="w"&gt;    &lt;/span&gt;call_ft&lt;span class="o"&gt;(&lt;/span&gt;_ft.FT_Open,&lt;span class="w"&gt; &lt;/span&gt;dev,&lt;span class="w"&gt; &lt;/span&gt;c.byref&lt;span class="o"&gt;(&lt;/span&gt;h&lt;span class="o"&gt;))&lt;/span&gt;
+&lt;span class="w"&gt;  &lt;/span&gt;File&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;/home/esynr3z/.local/lib/python3.8/site-packages/ftd2xx/ftd2xx.py&amp;quot;&lt;/span&gt;,&lt;span class="w"&gt; &lt;/span&gt;line&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;44&lt;/span&gt;,&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;in&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;call_ft
+&lt;span class="w"&gt;    &lt;/span&gt;raise&lt;span class="w"&gt; &lt;/span&gt;DeviceError&lt;span class="o"&gt;(&lt;/span&gt;status&lt;span class="o"&gt;)&lt;/span&gt;
+ftd2xx.ftd2xx.DeviceError:&lt;span class="w"&gt; &lt;/span&gt;DEVICE_NOT_OPENED
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Тут я начал проверять соединения, права в системе и гуглить все возможные причины. Даже нашел &lt;a href="https://stackoverflow.com/questions/57119708/unable-to-open-a-connection-with-a-ftd-232-device"&gt;ответ&lt;/a&gt;. Хотя на самом деле, стоило всего лишь заглянуть в ReadMe.txt на один раздел дальше в "Notes on Kernel Built-in Support of FTDI devices". Классика.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;On&lt;span class="w"&gt; &lt;/span&gt;most&lt;span class="w"&gt; &lt;/span&gt;distributions,&lt;span class="w"&gt; &lt;/span&gt;the&lt;span class="w"&gt; &lt;/span&gt;linux&lt;span class="w"&gt; &lt;/span&gt;kernel&lt;span class="w"&gt; &lt;/span&gt;will&lt;span class="w"&gt; &lt;/span&gt;have&lt;span class="w"&gt; &lt;/span&gt;either&lt;span class="w"&gt; &lt;/span&gt;a&lt;span class="w"&gt; &lt;/span&gt;built-in&lt;span class="w"&gt; &lt;/span&gt;or&lt;span class="w"&gt; &lt;/span&gt;optional
+module&lt;span class="w"&gt; &lt;/span&gt;called&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;ftdi_sio&amp;quot;&lt;/span&gt;.&lt;span class="w"&gt;  &lt;/span&gt;This&lt;span class="w"&gt; &lt;/span&gt;will&lt;span class="w"&gt; &lt;/span&gt;detect&lt;span class="w"&gt; &lt;/span&gt;an&lt;span class="w"&gt; &lt;/span&gt;FTDI&lt;span class="w"&gt; &lt;/span&gt;device&lt;span class="w"&gt; &lt;/span&gt;and&lt;span class="w"&gt; &lt;/span&gt;automatically&lt;span class="w"&gt; &lt;/span&gt;
+invoke&lt;span class="w"&gt; &lt;/span&gt;the&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;usbserial&amp;quot;&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;module&lt;span class="w"&gt; &lt;/span&gt;and&lt;span class="w"&gt; &lt;/span&gt;create&lt;span class="w"&gt; &lt;/span&gt;devices&lt;span class="w"&gt; &lt;/span&gt;such&lt;span class="w"&gt; &lt;/span&gt;as&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;/dev/ttyUSB0&amp;quot;&lt;/span&gt;.
+
+When&lt;span class="w"&gt; &lt;/span&gt;the&lt;span class="w"&gt; &lt;/span&gt;ftdi_sio&lt;span class="w"&gt; &lt;/span&gt;module&lt;span class="w"&gt; &lt;/span&gt;is&lt;span class="w"&gt; &lt;/span&gt;controlling&lt;span class="w"&gt; &lt;/span&gt;an&lt;span class="w"&gt; &lt;/span&gt;FTDI&lt;span class="w"&gt; &lt;/span&gt;device&lt;span class="w"&gt; &lt;/span&gt;it&lt;span class="w"&gt; &lt;/span&gt;is&lt;span class="w"&gt; &lt;/span&gt;not&lt;span class="w"&gt; &lt;/span&gt;available&lt;span class="w"&gt; &lt;/span&gt;to
+libftd2xx.&lt;span class="w"&gt;  &lt;/span&gt;If&lt;span class="w"&gt; &lt;/span&gt;the&lt;span class="w"&gt; &lt;/span&gt;library&lt;span class="w"&gt; &lt;/span&gt;attempts&lt;span class="w"&gt; &lt;/span&gt;to&lt;span class="w"&gt; &lt;/span&gt;access&lt;span class="w"&gt; &lt;/span&gt;the&lt;span class="w"&gt; &lt;/span&gt;device&lt;span class="w"&gt; &lt;/span&gt;it&lt;span class="w"&gt; &lt;/span&gt;will&lt;span class="w"&gt; &lt;/span&gt;receive&lt;span class="w"&gt; &lt;/span&gt;a
+message&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;FT_Open failed&amp;quot;&lt;/span&gt;.
+
+&lt;span class="m"&gt;1&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;Remove&lt;span class="w"&gt; &lt;/span&gt;the&lt;span class="w"&gt; &lt;/span&gt;ftdi_sio&lt;span class="w"&gt; &lt;/span&gt;module&lt;span class="w"&gt; &lt;/span&gt;from&lt;span class="w"&gt; &lt;/span&gt;the&lt;span class="w"&gt; &lt;/span&gt;running&lt;span class="w"&gt; &lt;/span&gt;kernel:
+...
+&lt;span class="m"&gt;2&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;Build&lt;span class="w"&gt; &lt;/span&gt;a&lt;span class="w"&gt; &lt;/span&gt;new&lt;span class="w"&gt; &lt;/span&gt;kernel&lt;span class="w"&gt; &lt;/span&gt;without&lt;span class="w"&gt; &lt;/span&gt;the&lt;span class="w"&gt; &lt;/span&gt;ftdi_sio&lt;span class="w"&gt; &lt;/span&gt;module.&lt;span class="w"&gt; &lt;/span&gt;
+...
+&lt;span class="m"&gt;3&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;Use&lt;span class="w"&gt; &lt;/span&gt;a&lt;span class="w"&gt; &lt;/span&gt;udev&lt;span class="w"&gt; &lt;/span&gt;unbind&lt;span class="w"&gt; &lt;/span&gt;sysfs&lt;span class="w"&gt; &lt;/span&gt;interface&lt;span class="w"&gt; &lt;/span&gt;to&lt;span class="w"&gt; &lt;/span&gt;disable&lt;span class="w"&gt; &lt;/span&gt;devices&lt;span class="w"&gt; &lt;/span&gt;as&lt;span class="w"&gt; &lt;/span&gt;they&lt;span class="w"&gt; &lt;/span&gt;are&lt;span class="w"&gt; &lt;/span&gt;connected.
+...
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Ок, пойдем первым путем. Это действо нужно выполнять это каждый раз после подключения FT2232H. Можно конечно &lt;a href="https://stackoverflow.com/questions/33981056/ftdi-d2xx-conflict-with-ftdi-sio-on-linux-how-to-remove-ftdi-sio-automatically"&gt;автоматизировать&lt;/a&gt;, но пока и так пойдет.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;$&lt;span class="w"&gt; &lt;/span&gt;sudo&lt;span class="w"&gt; &lt;/span&gt;rmmod&lt;span class="w"&gt; &lt;/span&gt;ftdi_sio
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Снова выполняем скрипт&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;$&lt;span class="w"&gt; &lt;/span&gt;./test_ftd2xx.py&lt;span class="w"&gt; &lt;/span&gt;
+Done!
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Отлично. "Дорисовываем остальную часть совы". Полный код &lt;a href="https://github.com/esynr3z/proto245/blob/master/examples/ft2232h_de10lite/test_ftd2xx.py"&gt;здесь&lt;/a&gt;.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;ftd2xx&lt;/span&gt; &lt;span class="k"&gt;as&lt;/span&gt; &lt;span class="nn"&gt;ft&lt;/span&gt;
+&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;time&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;time&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;sleep&lt;/span&gt;
+
+&lt;span class="n"&gt;KiB&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;1024&lt;/span&gt;
+&lt;span class="n"&gt;MiB&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;KiB&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="mi"&gt;1024&lt;/span&gt;
+
+&lt;span class="k"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;FPGA&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="fm"&gt;__init__&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;ftdi_serial&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;fifo245_mode&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;ftdi_serial&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;ftdi_serial&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;fifo245_mode&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;fifo245_mode&lt;/span&gt;
+
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="fm"&gt;__enter__&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+        &lt;span class="k"&gt;try&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+            &lt;span class="n"&gt;ftdev_id&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;ft&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;listDevices&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;index&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;ftdi_serial&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="k"&gt;except&lt;/span&gt; &lt;span class="ne"&gt;ValueError&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+            &lt;span class="k"&gt;raise&lt;/span&gt; &lt;span class="ne"&gt;Exception&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;No board found!&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;ftdev&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;ft&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;open&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;ftdev_id&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;ftdev&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;resetDevice&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+        &lt;span class="c1"&gt;# AN130 for more details about commands below&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;ftdev&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setBitMode&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mh"&gt;0xff&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mh"&gt;0x40&lt;/span&gt; &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;fifo245_mode&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;sync&amp;#39;&lt;/span&gt; &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="mh"&gt;0x00&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;ftdev&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setTimeouts&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;10&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;10&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;  &lt;span class="c1"&gt;# in ms&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;ftdev&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setUSBParameters&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;64&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;KiB&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;64&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;KiB&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;  &lt;span class="c1"&gt;# set rx, tx buffer size in bytes&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;ftdev&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setFlowControl&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;ft&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;defines&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;FLOW_RTS_CTS&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="bp"&gt;self&lt;/span&gt;
+
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="fm"&gt;__exit__&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;exc_type&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;exc_val&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;exc_tb&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;ftdev&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;close&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;test_read&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;total_bytes&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;MiB&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+        &lt;span class="o"&gt;...&lt;/span&gt;
+
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;test_write&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;total_bytes&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;MiB&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+        &lt;span class="o"&gt;...&lt;/span&gt;
+
+&lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="vm"&gt;__name__&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;__main__&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+    &lt;span class="k"&gt;with&lt;/span&gt; &lt;span class="n"&gt;FPGA&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;ftdi_serial&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="sa"&gt;b&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;FT3C8Z0AA&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;fifo245_mode&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;sync&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="k"&gt;as&lt;/span&gt; &lt;span class="n"&gt;de10lite&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="n"&gt;de10lite&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;test_read&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;100&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;MiB&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="n"&gt;de10lite&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;test_write&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;100&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;MiB&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Задумка простая:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Открываем чип, включаем режим синхронного FIFO, настраиваем размеры буферов и таймауты в драйвере.&lt;/li&gt;
+&lt;li&gt;Затем делаем тест на чтение - отправляем код команды и количество ожидаемых байт в ПЛИС, она начинает генерировать данные непрерывно (просто увеличивающееся значение счётчика), на стороне софта проверяем что всё корректно приняли.&lt;/li&gt;
+&lt;li&gt;Потом делаем тест на запись - отправляем в ПЛИС код команды и количество байт, которые хотим записать, отправляем данные, и ждём от ПЛИС ответа, что нужное количество байт было принято, и они все были корректны.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Поехали&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;$&lt;span class="w"&gt; &lt;/span&gt;./test_ftd2xx.py&lt;span class="w"&gt; &lt;/span&gt;
+Read&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;100&lt;/span&gt;.00&lt;span class="w"&gt; &lt;/span&gt;MiB&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="m"&gt;104857600&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;bytes&lt;span class="o"&gt;)&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;from&lt;span class="w"&gt; &lt;/span&gt;FPGA&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;in&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;10&lt;/span&gt;.846953&lt;span class="w"&gt; &lt;/span&gt;seconds&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="m"&gt;9&lt;/span&gt;.22&lt;span class="w"&gt; &lt;/span&gt;MiB/s&lt;span class="o"&gt;)&lt;/span&gt;
+Verify&lt;span class="w"&gt; &lt;/span&gt;data:&lt;span class="w"&gt; &lt;/span&gt;ok
+Wrote&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;100&lt;/span&gt;.00&lt;span class="w"&gt; &lt;/span&gt;MiB&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="m"&gt;104857600&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;bytes&lt;span class="o"&gt;)&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;to&lt;span class="w"&gt; &lt;/span&gt;FPGA&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;in&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;2&lt;/span&gt;.632750&lt;span class="w"&gt; &lt;/span&gt;seconds&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="m"&gt;37&lt;/span&gt;.98&lt;span class="w"&gt; &lt;/span&gt;MiB/s&lt;span class="o"&gt;)&lt;/span&gt;
+Verify&lt;span class="w"&gt; &lt;/span&gt;data:&lt;span class="w"&gt; &lt;/span&gt;ok
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Хмм, со скоростью чтения явно что-то не так. Экспереметируем, гуглим, и находим вот это:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href="https://github.com/0x6a77/JD2XX/issues/9"&gt;Data transfer speed is limited to 8MByte/s with FT232H in Synchronous FIFO style&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://www.ftdicommunity.com/index.php?topic=40.0"&gt;Reading data from FT232h via FT2XX driver - data loss on Raspberry Pi&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;TL;DR. Да, знаем что в драйвере под линукс баг, ограничивающий скорость чтения, да, править не планируем, используйте альтернативы.&lt;/p&gt;
+&lt;p&gt;Для чистоты совести проверим работу под Windows 7&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;D:&lt;span class="se"&gt;\&amp;gt;&lt;/span&gt;python&lt;span class="w"&gt; &lt;/span&gt;test_ftd2xx.py
+Read&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;100&lt;/span&gt;.00&lt;span class="w"&gt; &lt;/span&gt;MiB&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="m"&gt;104857600&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;bytes&lt;span class="o"&gt;)&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;from&lt;span class="w"&gt; &lt;/span&gt;FPGA&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;in&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;2&lt;/span&gt;.293204&lt;span class="w"&gt; &lt;/span&gt;seconds&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="m"&gt;43&lt;/span&gt;.61&lt;span class="w"&gt; &lt;/span&gt;MiB/s&lt;span class="o"&gt;)&lt;/span&gt;
+Verify&lt;span class="w"&gt; &lt;/span&gt;data:&lt;span class="w"&gt; &lt;/span&gt;ok
+Wrote&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;100&lt;/span&gt;.00&lt;span class="w"&gt; &lt;/span&gt;MiB&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="m"&gt;104857600&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;bytes&lt;span class="o"&gt;)&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;to&lt;span class="w"&gt; &lt;/span&gt;FPGA&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;in&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="m"&gt;3&lt;/span&gt;.478806&lt;span class="w"&gt; &lt;/span&gt;seconds&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="m"&gt;28&lt;/span&gt;.75&lt;span class="w"&gt; &lt;/span&gt;MiB/s&lt;span class="o"&gt;)&lt;/span&gt;
+Verify&lt;span class="w"&gt; &lt;/span&gt;data:&lt;span class="w"&gt; &lt;/span&gt;ok
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Да, похоже что не врали. Ну значит с драйвером от FTDI нам не пути, идём смотреть альтернативы.&lt;/p&gt;
+&lt;h3 id="pylibftdi-libftdi"&gt;pylibftdi (libftdi)&lt;/h3&gt;
+&lt;p&gt;Попробуем аналог оригинального драйвера с открытым исходным кодом - &lt;a href="https://www.intra2net.com/en/developer/libftdi/"&gt;libftdi&lt;/a&gt;. Он вроде как даже &lt;a href="https://elinux.org/Libftdi_vs_FTD2XX"&gt;не должен проигрывать по скорости&lt;/a&gt;. &lt;/p&gt;
+&lt;p&gt;Устанавливаем сам драйвер и модуль-обёртку &lt;a href="https://pypi.org/project/pylibftdi/"&gt;pylibftdi&lt;/a&gt;.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="n"&gt;sudo&lt;/span&gt; &lt;span class="n"&gt;apt&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt; &lt;span class="n"&gt;install&lt;/span&gt; &lt;span class="n"&gt;libftdi1&lt;/span&gt;
+&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="n"&gt;python3&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;m&lt;/span&gt; &lt;span class="n"&gt;pip&lt;/span&gt; &lt;span class="n"&gt;install&lt;/span&gt; &lt;span class="n"&gt;pylibftdi&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Проверяем что все установилось успешно&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="n"&gt;python3&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;m&lt;/span&gt; &lt;span class="n"&gt;pylibftdi&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;examples&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;info&lt;/span&gt;
+&lt;span class="n"&gt;pylibftdi&lt;/span&gt; &lt;span class="n"&gt;version&lt;/span&gt;     &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="mf"&gt;0.18.0&lt;/span&gt;
+&lt;span class="n"&gt;libftdi&lt;/span&gt; &lt;span class="n"&gt;version&lt;/span&gt;       &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="n"&gt;libftdi_version&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;major&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;minor&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;4&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;micro&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;version_str&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="sa"&gt;b&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;1.4&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;snapshot_str&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="sa"&gt;b&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;unknown&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;libftdi&lt;/span&gt; &lt;span class="n"&gt;library&lt;/span&gt; &lt;span class="n"&gt;name&lt;/span&gt;  &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="n"&gt;libftdi1&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;so&lt;/span&gt;&lt;span class="mf"&gt;.2&lt;/span&gt;
+&lt;span class="n"&gt;libusb&lt;/span&gt; &lt;span class="n"&gt;version&lt;/span&gt;        &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="n"&gt;libusb_version&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;major&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;minor&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;micro&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;23&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;nano&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;11397&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;rc&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="sa"&gt;b&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;describe&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="sa"&gt;b&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;http://libusb.info&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;libusb&lt;/span&gt; &lt;span class="n"&gt;library&lt;/span&gt; &lt;span class="n"&gt;name&lt;/span&gt;   &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="n"&gt;libusb&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="mf"&gt;1.0&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;so&lt;/span&gt;&lt;span class="mf"&gt;.0&lt;/span&gt;
+&lt;span class="n"&gt;Python&lt;/span&gt; &lt;span class="n"&gt;version&lt;/span&gt;        &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="mf"&gt;3.8.5&lt;/span&gt;
+&lt;span class="n"&gt;OS&lt;/span&gt; &lt;span class="n"&gt;platform&lt;/span&gt;           &lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="n"&gt;Linux&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="mf"&gt;5.8.0&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="mi"&gt;55&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;generic&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;x86_64&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="k"&gt;with&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;glibc2&lt;/span&gt;&lt;span class="mf"&gt;.29&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Составляем минимальный шаблон, который может открыть устройство и включить синхронный режим&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;pylibftdi&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;Driver&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;Device&lt;/span&gt;
+&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;time&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;time&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;sleep&lt;/span&gt;
+
+&lt;span class="n"&gt;KiB&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;1024&lt;/span&gt;
+&lt;span class="n"&gt;MiB&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;KiB&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="mi"&gt;1024&lt;/span&gt;
+
+&lt;span class="k"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;FPGA&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Device&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="fm"&gt;__init__&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;ftdi_serial&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;fifo245_mode&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;chunk_size&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;64&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="n"&gt;KiB&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+        &lt;span class="nb"&gt;super&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="fm"&gt;__init__&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;device_id&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="n"&gt;ftdi_serial&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;mode&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;b&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+                         &lt;span class="n"&gt;lazy_open&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="kc"&gt;True&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;chunk_size&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="n"&gt;chunk_size&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;interface_select&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;fifo245_mode&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;fifo245_mode&lt;/span&gt;
+
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="fm"&gt;__enter__&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+        &lt;span class="nb"&gt;super&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;open&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;ftdi_fn&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;ftdi_set_bitmode&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mh"&gt;0x40&lt;/span&gt; &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;fifo245_mode&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;sync&amp;#39;&lt;/span&gt; &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="mh"&gt;0x00&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="bp"&gt;self&lt;/span&gt;
+
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="fm"&gt;__exit__&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;exc_type&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;exc_val&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;exc_tb&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+        &lt;span class="nb"&gt;super&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;close&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+
+&lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="vm"&gt;__name__&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;__main__&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+    &lt;span class="k"&gt;with&lt;/span&gt; &lt;span class="n"&gt;FPGA&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;ftdi_serial&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;FT3C8Z0A&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;fifo245_mode&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;sync&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="k"&gt;as&lt;/span&gt; &lt;span class="n"&gt;de10lite&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="n"&gt;sleep&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;3&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Проверяем - ошибок при запуске нет, значит скорее всего всё работать будет. Добавляем тестовую логику, аналогично предыдущему примеру. Получается вот такой &lt;a href="https://github.com/esynr3z/proto245/blob/master/examples/ft2232h_de10lite/test_pylibftdi.py"&gt;скрипт&lt;/a&gt;. Запускаем:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="o"&gt;./&lt;/span&gt;&lt;span class="n"&gt;test_pylibftdi&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;py&lt;/span&gt; 
+&lt;span class="n"&gt;Read&lt;/span&gt; &lt;span class="mf"&gt;100.00&lt;/span&gt; &lt;span class="n"&gt;MiB&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;104857600&lt;/span&gt; &lt;span class="nb"&gt;bytes&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;FPGA&lt;/span&gt; &lt;span class="ow"&gt;in&lt;/span&gt; &lt;span class="mf"&gt;2.705440&lt;/span&gt; &lt;span class="n"&gt;seconds&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mf"&gt;36.96&lt;/span&gt; &lt;span class="n"&gt;MiB&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;s&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;Verify&lt;/span&gt; &lt;span class="n"&gt;data&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="n"&gt;ok&lt;/span&gt;
+&lt;span class="n"&gt;Wrote&lt;/span&gt; &lt;span class="mf"&gt;100.00&lt;/span&gt; &lt;span class="n"&gt;MiB&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;104857600&lt;/span&gt; &lt;span class="nb"&gt;bytes&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="n"&gt;to&lt;/span&gt; &lt;span class="n"&gt;FPGA&lt;/span&gt; &lt;span class="ow"&gt;in&lt;/span&gt; &lt;span class="mf"&gt;2.717165&lt;/span&gt; &lt;span class="n"&gt;seconds&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mf"&gt;36.80&lt;/span&gt; &lt;span class="n"&gt;MiB&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;s&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;Verify&lt;/span&gt; &lt;span class="n"&gt;data&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="n"&gt;ok&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Во! Уже похоже на нормальную скорость. Возможно, если немного оптимизировать методы записи и чтения в этой библиотеке, можно выжать и побольше. Но для интереса можно сделать и по-другому...&lt;/p&gt;
+&lt;h3 id="ftdi1-libftdi"&gt;ftdi1 (libftdi)&lt;/h3&gt;
+&lt;p&gt;В pylibftdi автор пошёл путем написания своего слоя абстракции над libftdi. Однако, вместе с исходниками libftdi поставляется &lt;code&gt;.i&lt;/code&gt; файл для &lt;a href="http://www.swig.org/"&gt;SWIG&lt;/a&gt;. Если в двух словах, то можно сгенировать Python обёртку для libftdi самостоятельно и вызывать C функции библиотеки практически нативно и без привлечения &lt;a href="https://docs.python.org/3/library/ctypes.html"&gt;ctypes&lt;/a&gt;. Почему бы и не попробовать.&lt;/p&gt;
+&lt;p&gt;Устанавливаем зависимости и клонируем репозиторий с исходниками&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="n"&gt;sudo&lt;/span&gt; &lt;span class="n"&gt;apt&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt; &lt;span class="n"&gt;install&lt;/span&gt; &lt;span class="n"&gt;build&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;essential&lt;/span&gt; &lt;span class="n"&gt;git&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;core&lt;/span&gt; &lt;span class="n"&gt;cmake&lt;/span&gt; &lt;span class="n"&gt;libusb&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="mf"&gt;1.0&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;dev&lt;/span&gt; &lt;span class="n"&gt;swig&lt;/span&gt; &lt;span class="n"&gt;python3&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;dev&lt;/span&gt; &lt;span class="n"&gt;libconfuse&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;dev&lt;/span&gt;
+&lt;span class="n"&gt;git&lt;/span&gt; &lt;span class="n"&gt;clone&lt;/span&gt; &lt;span class="n"&gt;git&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="o"&gt;//&lt;/span&gt;&lt;span class="n"&gt;developer&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;intra2net&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;com&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;libftdi&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Для того чтобы обёртка была под Python 3 придётся немного подправить скрипты сборки. Открываем файл &lt;code&gt;libftdi/python/CMakeLists.txt&lt;/code&gt; и меняем&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="n"&gt;find_package&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt; &lt;span class="n"&gt;PythonInterp&lt;/span&gt; &lt;span class="n"&gt;REQUIRED&lt;/span&gt; &lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;find_package&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt; &lt;span class="n"&gt;PythonLibs&lt;/span&gt; &lt;span class="n"&gt;REQUIRED&lt;/span&gt; &lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;на&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="n"&gt;find_package&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt; &lt;span class="n"&gt;PythonInterp&lt;/span&gt; &lt;span class="mf"&gt;3.8&lt;/span&gt; &lt;span class="n"&gt;REQUIRED&lt;/span&gt; &lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;find_package&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt; &lt;span class="n"&gt;PythonLibs&lt;/span&gt; &lt;span class="mf"&gt;3.8&lt;/span&gt; &lt;span class="n"&gt;REQUIRED&lt;/span&gt; &lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Собираем и устанавливаем полученный модуль&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="n"&gt;cd&lt;/span&gt; &lt;span class="n"&gt;libftdi&lt;/span&gt;
+&lt;span class="n"&gt;mkdir&lt;/span&gt; &lt;span class="n"&gt;build&lt;/span&gt;
+&lt;span class="n"&gt;cd&lt;/span&gt; &lt;span class="n"&gt;build&lt;/span&gt;
+&lt;span class="n"&gt;cmake&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;DSTATICLIBS&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="n"&gt;OFF&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;DFTDI_EEPROM&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="n"&gt;OFF&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;DEXAMPLES&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="n"&gt;OFF&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;DPYTHON_BINDINGS&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="n"&gt;ON&lt;/span&gt; &lt;span class="o"&gt;../&lt;/span&gt;
+&lt;span class="n"&gt;make&lt;/span&gt;
+&lt;span class="n"&gt;cp&lt;/span&gt; &lt;span class="n"&gt;python&lt;/span&gt;&lt;span class="o"&gt;/*&lt;/span&gt;&lt;span class="n"&gt;ftdi1&lt;/span&gt;&lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="o"&gt;~/.&lt;/span&gt;&lt;span class="n"&gt;local&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;lib&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;python3&lt;/span&gt;&lt;span class="mf"&gt;.8&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;site&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;packages&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;По традиции делаем сперва рыбу&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;ftdi1&lt;/span&gt; &lt;span class="k"&gt;as&lt;/span&gt; &lt;span class="nn"&gt;ft&lt;/span&gt;
+&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;time&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;time&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;sleep&lt;/span&gt;
+
+&lt;span class="k"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;FPGA&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="fm"&gt;__init__&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;serial&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;sync&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="kc"&gt;True&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;vid&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mh"&gt;0x0403&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;pid&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mh"&gt;0x6010&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_vid&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;vid&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_pid&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;pid&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_serial&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;serial&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_sync&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sync&lt;/span&gt;
+
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;_err_wrap&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;ret&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+        &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="n"&gt;ret&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;  &lt;span class="c1"&gt;# prints last error message&lt;/span&gt;
+            &lt;span class="k"&gt;raise&lt;/span&gt; &lt;span class="ne"&gt;Exception&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;&lt;/span&gt;&lt;span class="si"&gt;%s&lt;/span&gt;&lt;span class="s2"&gt; (&lt;/span&gt;&lt;span class="si"&gt;%d&lt;/span&gt;&lt;span class="s2"&gt;)&amp;quot;&lt;/span&gt; &lt;span class="o"&gt;%&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;ft&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get_error_string&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_ctx&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="n"&gt;ret&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt;
+        &lt;span class="k"&gt;else&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+            &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;ret&lt;/span&gt;
+
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="fm"&gt;__enter__&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_ctx&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;ft&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;new&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_err_wrap&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;ft&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;init&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_ctx&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_err_wrap&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;ft&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;usb_open_desc&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_ctx&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_vid&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_pid&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="kc"&gt;None&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_serial&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_err_wrap&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;ft&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;set_bitmode&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_ctx&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mh"&gt;0xff&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;ft&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;BITMODE_SYNCFF&lt;/span&gt; &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_sync&lt;/span&gt; &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="n"&gt;ft&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;BITMODE_RESET&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt;
+        &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="bp"&gt;self&lt;/span&gt;
+
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="fm"&gt;__exit__&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nb"&gt;type&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;traceback&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_err_wrap&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;ft&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;usb_close&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_ctx&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt;
+        &lt;span class="n"&gt;ft&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;deinit&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_ctx&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;write&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;data&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+        &lt;span class="n"&gt;bytes_wrote&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_err_wrap&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;ft&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;write_data&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_ctx&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;data&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt;
+        &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;bytes_wrote&lt;/span&gt;
+
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;read&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+        &lt;span class="n"&gt;bytes_read&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;data&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;ft&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;read_data&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_ctx&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_err_wrap&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;bytes_read&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;bytes_read&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;data&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+&lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="vm"&gt;__name__&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;__main__&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+    &lt;span class="k"&gt;with&lt;/span&gt; &lt;span class="n"&gt;FPGA&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;FT3C8Z0A&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="k"&gt;as&lt;/span&gt; &lt;span class="n"&gt;de10lite&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="n"&gt;sleep&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;3&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Наполняем тестовой логикой и чуть фиксим в процессе отладки - получается вот &lt;a href="https://github.com/esynr3z/proto245/blob/master/examples/ft2232h_de10lite/test_ftdi1.py"&gt;это&lt;/a&gt;. Запускаем&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="o"&gt;./&lt;/span&gt;&lt;span class="n"&gt;test_ftdi1&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;py&lt;/span&gt; 
+&lt;span class="n"&gt;Read&lt;/span&gt; &lt;span class="mf"&gt;100.00&lt;/span&gt; &lt;span class="n"&gt;MiB&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;104857600&lt;/span&gt; &lt;span class="nb"&gt;bytes&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;FPGA&lt;/span&gt; &lt;span class="ow"&gt;in&lt;/span&gt; &lt;span class="mf"&gt;2.422061&lt;/span&gt; &lt;span class="n"&gt;seconds&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mf"&gt;41.29&lt;/span&gt; &lt;span class="n"&gt;MiB&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;s&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;Verify&lt;/span&gt; &lt;span class="n"&gt;data&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="n"&gt;ok&lt;/span&gt;
+&lt;span class="n"&gt;Wrote&lt;/span&gt; &lt;span class="mf"&gt;100.00&lt;/span&gt; &lt;span class="n"&gt;MiB&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;104857600&lt;/span&gt; &lt;span class="nb"&gt;bytes&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="n"&gt;to&lt;/span&gt; &lt;span class="n"&gt;FPGA&lt;/span&gt; &lt;span class="ow"&gt;in&lt;/span&gt; &lt;span class="mf"&gt;2.342588&lt;/span&gt; &lt;span class="n"&gt;seconds&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mf"&gt;42.69&lt;/span&gt; &lt;span class="n"&gt;MiB&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;s&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;Verify&lt;/span&gt; &lt;span class="n"&gt;data&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="n"&gt;ok&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Другое дело! Заявленные даташитом "upto 40 Mbytes/Sec" уже есть. Можно было бы на этом и остановиться, но...&lt;/p&gt;
+&lt;h3 id="pyusb-libusb"&gt;pyusb (libusb)&lt;/h3&gt;
+&lt;p&gt;Гулять так гулять. Уберем лишнюю прослойку в виде libftdi, и будем читать/писать контрольные точки USB напрямую с помощью &lt;a href="https://github.com/pyusb/pyusb"&gt;pyusb&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Всего нам доступно 3 конечных точки: &lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;CONTROL - для настройки режимов и обслуживания USB&lt;/li&gt;
+&lt;li&gt;IN - для чтения данных из приемного FIFO чипа&lt;/li&gt;
+&lt;li&gt;OUT - для записи данных в передающее FIFO&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Работа с последними двумя довольно прозрачна - пишешь байты, они попадают в буфер, читаешь - получаешь данные из буфера. Но нужно ещё настроить синхронный режим. Очевидно, что нигде в документации не сказано как сформировать транзакцию в управляющую точку чтобы включить этот режим. Однако, можно просто "послушать" как это делает драйвер. Например, с помощью &lt;a href="https://wiki.wireshark.org/CaptureSetup/USB"&gt;Wireshark&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Gotcha! Вот она прошла - &lt;code&gt;0x40&lt;/code&gt; это как раз режим синхронного FIFO.&lt;/p&gt;
+&lt;p&gt;&lt;img alt="usb_pkt" src="https://positive-slack.github.io/blog/2021-07-16-ftdi-ft245/usb_pkt.png"&gt;&lt;/p&gt;
+&lt;p&gt;Теперь можно собрать минимально рабочий пример&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;usb.core&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;usb.util&lt;/span&gt;
+&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;time&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;time&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;sleep&lt;/span&gt;
+
+&lt;span class="k"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;FPGA&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="fm"&gt;__init__&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;serial&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;sync&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="kc"&gt;True&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;vid&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mh"&gt;0x0403&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;pid&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mh"&gt;0x6010&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_vid&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;vid&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_pid&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;pid&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_serial&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;serial&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_sync&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sync&lt;/span&gt;
+
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="fm"&gt;__enter__&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+        &lt;span class="n"&gt;dev&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;usb&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;core&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;find&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;idVendor&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_vid&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;idProduct&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_pid&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="n"&gt;dev&lt;/span&gt; &lt;span class="ow"&gt;is&lt;/span&gt; &lt;span class="kc"&gt;None&lt;/span&gt; &lt;span class="ow"&gt;or&lt;/span&gt; &lt;span class="n"&gt;dev&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;serial_number&lt;/span&gt; &lt;span class="o"&gt;!=&lt;/span&gt; &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_serial&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+            &lt;span class="k"&gt;raise&lt;/span&gt; &lt;span class="ne"&gt;Exception&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;Device was not found!&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_ft&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;dev&lt;/span&gt;
+        &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_ft&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;is_kernel_driver_active&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+            &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_ft&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;detach_kernel_driver&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="n"&gt;usb&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;util&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;claim_interface&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_ft&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_ft&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;ctrl_transfer&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;bmRequestType&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mh"&gt;0x40&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;bRequest&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;11&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;wValue&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mh"&gt;0x000140ff&lt;/span&gt; &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_sync&lt;/span&gt; &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="mh"&gt;0x000000ff&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="bp"&gt;self&lt;/span&gt;
+
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="fm"&gt;__exit__&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nb"&gt;type&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;traceback&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+        &lt;span class="n"&gt;usb&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;util&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;release_interface&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_ft&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;write&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;data&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+        &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_ft&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;write&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mh"&gt;0x2&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;data&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;  &lt;span class="c1"&gt;# OUT EP&lt;/span&gt;
+
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;read&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+        &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="bp"&gt;self&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;_ft&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;read&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mh"&gt;0x81&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;  &lt;span class="c1"&gt;# IN EP&lt;/span&gt;
+
+&lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="vm"&gt;__name__&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;__main__&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+    &lt;span class="k"&gt;with&lt;/span&gt; &lt;span class="n"&gt;FPGA&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;FT3C8Z0A&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="k"&gt;as&lt;/span&gt; &lt;span class="n"&gt;de10lite&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="n"&gt;sleep&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;3&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Отлично. Теперь добавляем логику для тестов в &lt;a href="https://github.com/esynr3z/proto245/blob/master/examples/ft2232h_de10lite/test_pyusb.py"&gt;скрипт&lt;/a&gt; и запускаем&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="err"&gt;$&lt;/span&gt; &lt;span class="o"&gt;./&lt;/span&gt;&lt;span class="n"&gt;test_pyusb&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;py&lt;/span&gt; 
+&lt;span class="n"&gt;Read&lt;/span&gt; &lt;span class="mf"&gt;100.00&lt;/span&gt; &lt;span class="n"&gt;MiB&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;104857600&lt;/span&gt; &lt;span class="nb"&gt;bytes&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;FPGA&lt;/span&gt; &lt;span class="ow"&gt;in&lt;/span&gt; &lt;span class="mf"&gt;2.335567&lt;/span&gt; &lt;span class="n"&gt;seconds&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mf"&gt;42.82&lt;/span&gt; &lt;span class="n"&gt;MiB&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;s&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;Verify&lt;/span&gt; &lt;span class="n"&gt;data&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="n"&gt;ok&lt;/span&gt;
+&lt;span class="n"&gt;Wrote&lt;/span&gt; &lt;span class="mf"&gt;10.00&lt;/span&gt; &lt;span class="n"&gt;MiB&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;10485760&lt;/span&gt; &lt;span class="nb"&gt;bytes&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="n"&gt;to&lt;/span&gt; &lt;span class="n"&gt;FPGA&lt;/span&gt; &lt;span class="ow"&gt;in&lt;/span&gt; &lt;span class="mf"&gt;0.239542&lt;/span&gt; &lt;span class="n"&gt;seconds&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mf"&gt;41.75&lt;/span&gt; &lt;span class="n"&gt;MiB&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;s&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;Verify&lt;/span&gt; &lt;span class="n"&gt;data&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="n"&gt;ok&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+&lt;p&gt;Выше головы прыгнуть не получилось, но вот некоторые нюансы появились:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;FT2232H (ровно как и другие FT2xx) в каждой usb транзакции вставляет в начало два байта со статусом модемных сигналов. Другие драйвера вырезают их автоматически, здесь это приходится делать в постпроцессинге, т.к. на лету это режет скорость в разы. Поэтому полученная скорость чтения - это несколько лукавая цифра.&lt;/li&gt;
+&lt;li&gt;В тесте на запись пишу 10МБ вместо обычных 100МБ как ранее, т.к. при большом объеме данных pyusb падает с ошибкой &lt;code&gt;usb.core.USBError: [Errno 5] Input/Output Error&lt;/code&gt;. Экспереметировал, пробовал бить данные на кусочки, но так и не смог её обойти.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;В целом, опыт интересный, но без веской причины стучать в конечные точки руками наверное не стоит, лучше воспользоваться драйвером.&lt;/p&gt;
+&lt;h2 id="ft600"&gt;Про FT600&lt;/h2&gt;
+&lt;p&gt;В планах было написать и о работе со "старшим братом". Но тут всё сложилось интересно. У меня пока еще не было этого чипа на столе, но один добрый человек за много километров от меня подключил отладку с FT600 к девборде с Lattice, подцепил это всё к Raspberry Pi, воткнул камеру и дал мне ssh. Поигрался я какое-то время, и понял что без отладчика и анализатора как-то совсем грустно - юзать бета-версию драйверов FTDI (драйвера под ARM они пока еще не выложили в открытый доступ), синтезить Yosys'ом без констрейнтов на IO и наблюдать за работой по мутному и дерганному видео, то ещё удовольствие. Поэтому отложил это дело до тех пор, пока чип не появится живьём у меня.&lt;/p&gt;</content><category term="Digital design"></category><category term="fpga"></category><category term="ftdi"></category><category term="usb"></category></entry></feed>

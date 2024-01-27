@@ -1,0 +1,994 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="HandheldFriendly" content="True" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,400;0,700;1,400&family=Source+Sans+Pro:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" href="../../theme/stylesheet/style.min.css">
+
+    <link id="dark-theme-style" rel="stylesheet" type="text/css"
+          media="(prefers-color-scheme: dark), (prefers-color-scheme: no-preference)"
+    href="../../theme/stylesheet/dark-theme.min.css">
+
+    <link id="pygments-dark-theme" rel="stylesheet" type="text/css"
+              media="(prefers-color-scheme: dark), (prefers-color-scheme: no-preference)"
+          href="../../theme/pygments/monokai.min.css">
+    <link id="pygments-light-theme" rel="stylesheet" type="text/css"
+              media="(prefers-color-scheme: light)"
+          href="../../theme/pygments/emacs.min.css">
+
+
+
+  <link rel="stylesheet" type="text/css" href="../../theme/font-awesome/css/fontawesome.css">
+  <link rel="stylesheet" type="text/css" href="../../theme/font-awesome/css/brands.css">
+  <link rel="stylesheet" type="text/css" href="../../theme/font-awesome/css/solid.css">
+
+  <link rel="stylesheet" type="text/css" href="../../assets/css/myblog.css">
+
+
+  <!-- Chrome, Firefox OS and Opera -->
+  <meta name="theme-color" content="#369DBE">
+  <!-- Windows Phone -->
+  <meta name="msapplication-navbutton-color" content="#369DBE">
+  <!-- iOS Safari -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- Microsoft EDGE -->
+  <meta name="msapplication-TileColor" content="#369DBE">
+
+  <link href="https://positive-slack.github.io/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="positive slack blog Atom">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-7JN7249338"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  gtag('js', new Date());
+
+  gtag('config', 'G-7JN7249338');
+</script>
+
+
+
+
+
+
+ 
+
+<meta name="author" content="esynr3z" />
+<meta name="description" content="Собрал и проверил на практике инструменты для работы с USB-FIFO чипами от FTDI на FPGA." />
+<meta name="keywords" content="fpga, ftdi, usb">
+
+
+  <meta property="og:site_name" content="positive slack blog"/>
+  <meta property="og:title" content="FTDI USB-FIFO или режим FT245"/>
+  <meta property="og:description" content="Собрал и проверил на практике инструменты для работы с USB-FIFO чипами от FTDI на FPGA."/>
+  <meta property="og:locale" content="en_US"/>
+  <meta property="og:url" content="../../blog/2021-07-16-ftdi-ft245/"/>
+  <meta property="og:type" content="article"/>
+  <meta property="article:published_time" content="2021-07-16 10:20:00+03:00"/>
+  <meta property="article:modified_time" content="2024-01-27 11:40:56.670326+03:00"/>
+  <meta property="article:author" content="../../author/esynr3z/">
+  <meta property="article:section" content="Digital design"/>
+  <meta property="article:tag" content="fpga"/>
+  <meta property="article:tag" content="ftdi"/>
+  <meta property="article:tag" content="usb"/>
+  <meta property="og:image" content="/assets/logo.jpg">
+
+  <title>positive slack blog &ndash; FTDI USB-FIFO или режим FT245</title>
+
+
+</head>
+<body >
+
+<aside>
+  <div>
+    <a href="../../">
+      <img src="/assets/logo.jpg" alt="positive slack blog" title="positive slack blog">
+    </a>
+
+    <h1>
+      <a href="../../">positive slack blog</a>
+    </h1>
+
+    <p>digital design, verification and collaterals</p>
+
+
+
+    <ul class="social">
+      <li>
+        <a class="sc-question"
+           href="/pages/about/"
+           target="_blank">
+          <i class="fa-solid fa-question"></i>
+        </a>
+      </li>
+      <li>
+        <a class="sc-github"
+           href="https://github.com/esynr3z"
+           target="_blank">
+          <i class="fa-brands fa-github"></i>
+        </a>
+      </li>
+      <li>
+        <a class="sc-telegram"
+           href="https://t.me/positiveslack"
+           target="_blank">
+          <i class="fa-brands fa-telegram"></i>
+        </a>
+      </li>
+      <li>
+        <a class="sc-comment"
+           href="https://github.com/positive-slack/positive-slack.github.io/discussions/categories/feedback"
+           target="_blank">
+          <i class="fa-solid fa-comment"></i>
+        </a>
+      </li>
+      <li>
+        <a class="sc-rss"
+           href="/feeds/all.atom.xml"
+           target="_blank">
+          <i class="fa-solid fa-rss"></i>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+</aside>
+  <main>
+
+<nav>
+  <a href="../../">Home</a>
+
+  <a href="/tag/">Tags</a>
+  <a href="/category/">Categories</a>
+  <a href="/archive/">Archives</a>
+</nav>
+
+<article class="single">
+  <header>
+      
+    <h1 id="2021-07-16-ftdi-ft245">FTDI USB-FIFO или режим FT245</h1>
+    <p>
+      Posted on 16 Jul 2021 in <a href="../../category/digital-design/">Digital design</a>
+
+        &#8226; 12 min read
+    </p>
+  </header>
+
+
+  <div>
+    <div class="toc"><span class="toctitle">Table of Contents</span><ul>
+<li><a href="#ftdi-usb-fifo">FTDI USB-FIFO</a><ul>
+<li><a href="#_1">Железо</a></li>
+<li><a href="#_2">Софт</a></li>
+<li><a href="#_3">Документация</a></li>
+</ul>
+</li>
+<li><a href="#proto245">Проект proto245</a><ul>
+<li><a href="#proto245a">proto245a</a></li>
+<li><a href="#proto245s">proto245s</a></li>
+</ul>
+</li>
+<li><a href="#ft2232h-de10-lite">Пример с FT2232H + DE10-Lite</a><ul>
+<li><a href="#ftd2xx-d2xx">ftd2xx (D2xx)</a></li>
+<li><a href="#pylibftdi-libftdi">pylibftdi (libftdi)</a></li>
+<li><a href="#ftdi1-libftdi">ftdi1 (libftdi)</a></li>
+<li><a href="#pyusb-libusb">pyusb (libusb)</a></li>
+</ul>
+</li>
+<li><a href="#ft600">Про FT600</a></li>
+</ul>
+</div>
+<p>Последнее время я довольно много работал с чипами FTDI в качестве переходников USB-FIFO для FPGA: FT232H, FT2232H, FT600, асинхронный и синхронный режимы FT245, самописные ядра на SystemVerilog, ответное ПО на Python - вот это вот всё. Собралась некоторая критическая масса заметок, которые решил причесать и собрать в пост.</p>
+<p><img alt="system" src="../../blog/2021-07-16-ftdi-ft245/system.png"></p>
+<h2 id="ftdi-usb-fifo">FTDI USB-FIFO</h2>
+<h3 id="_1">Железо</h3>
+<p>Насколько я понимаю, линейка этих переходников  развивалась у FTDI так: <a href="https://www.ftdichip.cn/Products/ICs/FT8U245AM.htm">FT8U245AM</a> → <a href="https://ftdichip.com/products/ft245bl/">FT245B</a> → <a href="https://ftdichip.com/products/ft245rq/">FT245R</a>. Все они реализуют режим асинхронной параллельной шины, позволяющей обмениваться данными со скоростью до 1 МБ/с (USB 2.0 FullSpeed).</p>
+<p><img alt="ft245_async" src="../../blog/2021-07-16-ftdi-ft245/ft245_async.png"></p>
+<p>Затем у FTDI начали появляться мультиинтерфейсные чипы типа <a href="https://ftdichip.com/products/ft232hq/">FT232H</a>/<a href="https://ftdichip.com/products/ft2232hq/">FT2232H</a> в стиле "переходник USB во что-угодно". И так как протокол, реализующий FIFO, там был фактически такой же как и у предшественников, то и назвали его соответственно - FT245.  Однако, скорости возросли вместе с переходом на USB 2.0 HighSpeed, а значит надо было вводить ещё и синхронный режим, чтобы выжать из шины ещё больше. Поэтому стало 2 вида протоколов: асинхронный (легаси, но уже до 8 МБ/с) и синхронный (новый, до 40 МБ/с) FIFO.</p>
+<p><img alt="ft245_sync" src="../../blog/2021-07-16-ftdi-ft245/ft245_sync.png"></p>
+<p>В последних чипах с USB 3.0 SuperSpeed (<a href="https://ftdichip.com/products/ft601q-b/">FT60xQ</a>) асинхронный режим отвалился совсем, и остался только синхронный 245  (200-400 МБ/с). Правда с небольшой модификацией - шиной BE (byte enable), т.к. размерность шины данных увеличилась с 8 до 16/32 бит.</p>
+<p><img alt="ft245_sync" src="../../blog/2021-07-16-ftdi-ft245/ft245_ft600.png"></p>
+<p>На текущий момент мы имеем следующий ассортимент чипов:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">FTDI Chip</th>
+<th style="text-align: left;">USB Speed</th>
+<th style="text-align: left;">Asynchronous FIFO</th>
+<th style="text-align: left;">Synchronous FIFO</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><a href="https://ftdichip.com/products/ft245rq/">FT245R</a></td>
+<td style="text-align: left;">FullSpeed</td>
+<td style="text-align: left;">↔️ 1MB/s</td>
+<td style="text-align: left;">❌</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="https://ftdichip.com/products/ft240xs/">FT240X</a></td>
+<td style="text-align: left;">FullSpeed</td>
+<td style="text-align: left;">↔️ 1MB/s</td>
+<td style="text-align: left;">❌</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="https://ftdichip.com/products/ft2232d/">FT2232D</a></td>
+<td style="text-align: left;">FullSpeed</td>
+<td style="text-align: left;">↔️ 1MB/s</td>
+<td style="text-align: left;">❌</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="https://ftdichip.com/products/ft232hq/">FT232H</a></td>
+<td style="text-align: left;">HighSpeed</td>
+<td style="text-align: left;">↔️ 8MB/s</td>
+<td style="text-align: left;">↔️ 40MB/s</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="https://ftdichip.com/products/ft2232hq/">FT2232H</a></td>
+<td style="text-align: left;">HighSpeed</td>
+<td style="text-align: left;">↔️ 8MB/s</td>
+<td style="text-align: left;">↔️ 40MB/s</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="https://ftdichip.com/products/ft232hp/">FT232HP</a>/<a href="https://ftdichip.com/products/ft233hp/">FT233HP</a></td>
+<td style="text-align: left;">HighSpeed</td>
+<td style="text-align: left;">↔️ 8MB/s</td>
+<td style="text-align: left;">↔️ 40MB/s</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="https://ftdichip.com/products/ft2232hp/">FT2232HP</a>/<a href="https://ftdichip.com/products/ft2233hp/">FT2233HP</a></td>
+<td style="text-align: left;">HighSpeed</td>
+<td style="text-align: left;">↔️ 8MB/s</td>
+<td style="text-align: left;">↔️ 40MB/s</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="https://ftdichip.com/products/ft600q-b/">FT600Q</a></td>
+<td style="text-align: left;">SuperSpeed</td>
+<td style="text-align: left;">❌</td>
+<td style="text-align: left;">↔️ 200MB/s</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="https://ftdichip.com/products/ft601q-b/">FT601Q</a></td>
+<td style="text-align: left;">SuperSpeed</td>
+<td style="text-align: left;">❌</td>
+<td style="text-align: left;">↔️ 400MB/s</td>
+</tr>
+<tr>
+<td style="text-align: left;"><a href="https://ftdichip.com/products/ft602q-b/">FT602Q</a></td>
+<td style="text-align: left;">SuperSpeed</td>
+<td style="text-align: left;">❌</td>
+<td style="text-align: left;">↔️ 400MB/s</td>
+</tr>
+</tbody>
+</table>
+<p>В итоге,  если внимательно посмотреть на все времянки и формализовать работу с FT чипами со стороны ПЛИС, то фактически нужно только 2 ядра - одно для асинхронного протокола 245, другое - для синхронного.</p>
+<h3 id="_2">Софт</h3>
+<p>У меня ОС - Ubuntu 20.04, и основной язык прикладного софта - Python.</p>
+<p>В этом контексте я попытался найти все доступные на текущий момент библиотеки. На самом деле их даже чуть больше, но некоторые библиотеки верхнего уровня заточены только под режимы serial или bitbang, которые мне не нужны.</p>
+<ul>
+<li><a href="https://github.com/snmishra/ftd2xx">snmishra/ftd2xx</a></li>
+<li><a href="https://github.com/eblot/pyftdi">eblot/pyftdi</a></li>
+<li><a href="https://github.com/pyusb/pyusb">pyusb</a></li>
+<li><a href="https://github.com/codedstructure/pylibftdi">codedstructure/pylibftdi</a></li>
+<li><a href="https://github.com/libusb/libusb">libusb</a></li>
+<li><a href="https://www.intra2net.com/en/developer/libftdi/index.php">libftdi</a> (ftdi1 - внутри)</li>
+<li><a href="https://ftdichip.com/drivers/d2xx-drivers/">d2xx</a></li>
+<li><a href="https://ftdichip.com/drivers/d3xx-drivers/">d3xx</a></li>
+<li><a href="https://ftdichip.com/software-examples/ft600-601-software-examples/">ftd3xx</a> (SuperSpeed Python Example)</li>
+</ul>
+<p>Нейминг библиотек не отличается особым разнообразием - почти все имена состоят из одного набора корней: "py", "usb", "ftdi", "lib". Надеюсь картинка тут поможет.</p>
+<p><img alt="ftdi_libs" src="../../blog/2021-07-16-ftdi-ft245/ftdi_libs.png"></p>
+<p>В целом, тут получается 2 пути - либо используем драйвер от производителя, либо используем libusb с подошедшей обёрткой. Вроде всё просто.</p>
+<h3 id="_3">Документация</h3>
+<p>Просто список источников по теме, которые будут полезны (ну кроме даташитов, очевидно):</p>
+<ul>
+<li><a href="https://ftdichip.com/wp-content/uploads/2020/08/D2XX_Programmers_GuideFT_000071.pdf">D2XX Programmers Guide</a></li>
+<li><a href="https://ftdichip.com/wp-content/uploads/2020/08/TN_167_FIFO_Basics.pdf">TN167 FIFO Basics</a></li>
+<li><a href="https://ftdichip.com/wp-content/uploads/2020/08/AN_130_FT2232H_Used_In_FT245-Synchronous-FIFO-Mode.pdf">AN130 FT2232H Used In FT245 Synchronous FIFO Mode</a></li>
+<li><a href="https://ftdichip.com/wp-content/uploads/2020/07/AN_379-D3xx-Programmers-Guide-1.pdf">AN379 D3xx Programmers Guide</a></li>
+<li><a href="https://ftdichip.com/wp-content/uploads/2020/07/AN_386-FTDI-FT600-Maximize-Performance.pdf">AN386 FTDI FT600 Maximize Performance</a></li>
+<li><a href="https://ftdichip.com/wp-content/uploads/2020/07/AN_412_FT600_FT601-USB-Bridge-chips-Integration.pdf">AN412 FT600_FT601 USB Bridge chips Integration</a></li>
+<li><a href="https://www.ftdicommunity.com/index.php?topic=54.msg1901#msg1901">FT600/601 Question about maximum data rate (practical)</a></li>
+</ul>
+<h2 id="proto245">Проект proto245</h2>
+<p>Ядра для обоих видов протоколов написаны на SystemVerilog и лежат в репозитории <a href="https://github.com/esynr3z/proto245">proto245</a> на Github.</p>
+<p>Конечно, я не первый кто пишет подобные корки:</p>
+<ul>
+<li><a href="https://github.com/alexforencich/verilog-ft245">alexforencich/verilog-ft245</a> (aсинхронный)</li>
+<li><a href="https://github.com/ultraembedded/core_ftdi_bridge">ultraembedded/core_ftdi_bridge</a> (aсинхронный/синхронный)</li>
+<li><a href="https://github.com/ultraembedded/core_ft60x_axi">ultraembedded/core_ft60x_axi</a> (синхронный)</li>
+<li><a href="https://github.com/6thimage/FT245_interface">6thimage/FT245_interface</a> (aсинхронный)</li>
+<li><a href="https://github.com/WangXuan95/FTDI-245fifo-interface">WangXuan95/FTDI-245fifo-interface</a> (синхронный)</li>
+</ul>
+<p>У всех есть свои особенности реализации, но самый главный фатальный недостаток - они <a href="https://en.wikipedia.org/wiki/Not_invented_here">Not_Invented_Here</a> =). Так что раз погружаться в тему, так с головой.</p>
+<h3 id="proto245a">proto245a</h3>
+<p>Реализует асинхронный FT245 с одной стороны, и предоставляет 2 простых FIFO интерфейса с другой (приём и передача). Умышленно не стал вносить внутрь какой-нибудь AXI-Stream, т.к. накрутить его поверх не составит проблем, ну и мне нужны были именно "сырые" FIFO. Возможно, когда-нибудь я это исправлю.</p>
+<p>Времянки сигналов <code>RD#</code> и <code>WR#</code> конфигурируются с помощью параметров. Плюс можно настроить как размеры буферов FIFO на приём и передачу, так и их вид, в зависимости от того сколько тактовых доменов будет в дизайне.</p>
+<p>Иерархия модулей:</p>
+<div class="highlight"><pre><span></span><code>Single clock domain:
+proto245a (proto245a.sv)
+├── rxfifo (fifo_sync.sv)
+│   └── dpram (dpram.sv)
+└── txfifo (fifo_sync.sv)
+    └── dpram (dpram.sv)
+
+Multiple clock domains:
+proto245a (proto245a.sv)
+├── rxfifo (fifo_async.sv)
+│   └── dpram (dpram.sv)
+└── txfifo (fifo_async.sv)
+    └── dpram (dpram.sv)
+</code></pre></div>
+
+<p>Времянки интерфейсов FIFO, уходящих внутрь ПЛИС ниже.</p>
+<p><img alt="fifos" src="../../blog/2021-07-16-ftdi-ft245/fifos.png"></p>
+<p>Больше про блок особенно рассказывать нечего, разве что сигнал Send Immediate / Wake Up signal (<code>SIWU</code>) не используется и находится в неактивном состоянии.</p>
+<h3 id="proto245s">proto245s</h3>
+<p>Реализует синхронный FT245 с одной стороны, и предоставляет 2 простых FIFO интерфейса с другой (приём и передача).</p>
+<p>Тут настроек несколько больше. Можно выбрать нужную ширину данных, настроить FIFO, как и ранее. Плюс, т.к. обмен идёт пачками/бёрстами/bursts данных, то есть настройки размеров бёрста, условий для старта приемопередачи, в зависимости от уровня заполнения FIFO, и паузы между бёрстами. Это позволяет провести тонкий тюнинг производительности, при желании.</p>
+<p>Иерархия модулей:</p>
+<div class="highlight"><pre><span></span><code>Single clock domain:
+proto245s (proto245s.sv)
+├── rxfifo (fifo_sync.sv)
+│   └── dpram (dpram.sv)
+├── txfifo (fifo_sync.sv)
+│   └── dpram (dpram.sv)
+└── txovrbuf (fifo_sync.sv)
+    └── dpram (dpram.sv)
+
+Multiple clock domains:
+proto245s (proto245s.sv)
+├── rxfifo (fifo_async.sv)
+│   └── dpram (dpram.sv)
+├── txfifo (fifo_async.sv)
+│   └── dpram (dpram.sv)
+└── txovrbuf (fifo_sync.sv)
+    └── dpram (dpram.sv)
+</code></pre></div>
+
+<p>FIFO, смотрящие внутрь ПЛИС, работают точно так же как и в proto245a.</p>
+<p>Сигнал <code>SIWU</code> (чипы FT2xxx) не используется - находится в неактивном состоянии.</p>
+<p>Сигналы <code>BE</code> (чипы FT60x) пока не используются тоже - по чтению игнорируются, по записи - там всегда единички. Поэтому транзакции должны быть выровнены пословно.</p>
+<p>Кстати надо наверное ещё упомянуть, что в синхронном режиме существует проблема потери данных из-за "конвеерности", возникающая, если поставить триггеры в пути контрольных сигналов и данных. Т.е. когда происходит чтение из FT, то пока сигнал о заполненности нашего приемного FIFO уйдет в FT-чип и тот остановит выдачу данных, мы можем потерять пару последних слов (RX FIFO overflow). Почти тоже самое и при передаче - пока сигнал от FT о заполненности буфера дойдет до нас и мы остановим чтение нашего передающего FIFO, то потеряем слова уже вычитанные из него , но ещё не отправленные наружу (TX FIFO overrun).</p>
+<p>В реализациях с github обходят это по разному, вплоть до полного отсутствия триггеров - сигналы с IO идут сразу на BRAM внутри FIFO. У меня триггеры по входам-выходам имеются, и проблема overflow решается за счёт введения состояния "почти полный", а проблема overrun с помощью микрофифо на несколько элементов.</p>
+<h2 id="ft2232h-de10-lite">Пример с FT2232H + DE10-Lite</h2>
+<p>Для меня основной интерес представлял именно синхронный режим, поэтому дальше будет только о нём. Но асинхронный тоже работает, и в репозитории можно найти информацию как его запустить.</p>
+<p>В качестве тестового стенда использовалась плата с <a href="https://aliexpress.ru/item/4000352777336.html">FT2232H</a> и отладка <a href="https://www.terasic.com.tw/cgi-bin/page/archive.pl?Language=English&amp;No=1021">DE10-Lite</a>.</p>
+<p><img alt="devboards" src="../../blog/2021-07-16-ftdi-ft245/devboards.png"></p>
+<p>Соединялись они через DIY-плату переходник. Список соединений в таблице:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">FT Pin</th>
+<th style="text-align: left;">FT Function</th>
+<th style="text-align: left;">GPIO J1 Header</th>
+<th style="text-align: left;">RTL Top</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">ADBUS0</td>
+<td style="text-align: left;">D0</td>
+<td style="text-align: left;">gpio[8]</td>
+<td style="text-align: left;">ft_data[0]</td>
+</tr>
+<tr>
+<td style="text-align: left;">ADBUS1</td>
+<td style="text-align: left;">D1</td>
+<td style="text-align: left;">gpio[10]</td>
+<td style="text-align: left;">ft_data[1]</td>
+</tr>
+<tr>
+<td style="text-align: left;">ADBUS2</td>
+<td style="text-align: left;">D2</td>
+<td style="text-align: left;">gpio[12]</td>
+<td style="text-align: left;">ft_data[2]</td>
+</tr>
+<tr>
+<td style="text-align: left;">ADBUS3</td>
+<td style="text-align: left;">D3</td>
+<td style="text-align: left;">gpio[14]</td>
+<td style="text-align: left;">ft_data[3]</td>
+</tr>
+<tr>
+<td style="text-align: left;">ADBUS4</td>
+<td style="text-align: left;">D4</td>
+<td style="text-align: left;">gpio[16]</td>
+<td style="text-align: left;">ft_data[4]</td>
+</tr>
+<tr>
+<td style="text-align: left;">ADBUS5</td>
+<td style="text-align: left;">D5</td>
+<td style="text-align: left;">gpio[18]</td>
+<td style="text-align: left;">ft_data[5]</td>
+</tr>
+<tr>
+<td style="text-align: left;">ADBUS6</td>
+<td style="text-align: left;">D6</td>
+<td style="text-align: left;">gpio[20]</td>
+<td style="text-align: left;">ft_data[6]</td>
+</tr>
+<tr>
+<td style="text-align: left;">ADBUS7</td>
+<td style="text-align: left;">D7</td>
+<td style="text-align: left;">gpio[22]</td>
+<td style="text-align: left;">ft_data[7]</td>
+</tr>
+<tr>
+<td style="text-align: left;">ACBUS0</td>
+<td style="text-align: left;">RXF#</td>
+<td style="text-align: left;">gpio[24]</td>
+<td style="text-align: left;">ft_rxfn</td>
+</tr>
+<tr>
+<td style="text-align: left;">ACBUS1</td>
+<td style="text-align: left;">TXE#</td>
+<td style="text-align: left;">gpio[26]</td>
+<td style="text-align: left;">ft_txen</td>
+</tr>
+<tr>
+<td style="text-align: left;">ACBUS2</td>
+<td style="text-align: left;">RD#</td>
+<td style="text-align: left;">gpio[28]</td>
+<td style="text-align: left;">ft_rdn</td>
+</tr>
+<tr>
+<td style="text-align: left;">ACBUS3</td>
+<td style="text-align: left;">WR#</td>
+<td style="text-align: left;">gpio[30]</td>
+<td style="text-align: left;">ft_wrn</td>
+</tr>
+<tr>
+<td style="text-align: left;">ACBUS4</td>
+<td style="text-align: left;">SIWU</td>
+<td style="text-align: left;">gpio[32]</td>
+<td style="text-align: left;">ft_siwu</td>
+</tr>
+<tr>
+<td style="text-align: left;">ACBUS5</td>
+<td style="text-align: left;">CLKOUT</td>
+<td style="text-align: left;">gpio[2]</td>
+<td style="text-align: left;">ft_clk</td>
+</tr>
+<tr>
+<td style="text-align: left;">ACBUS6</td>
+<td style="text-align: left;">OE#</td>
+<td style="text-align: left;">gpio[34]</td>
+<td style="text-align: left;">ft_oen</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ftd2xx-d2xx">ftd2xx (D2xx)</h3>
+<p>Начнем с драйверов от производителя <a href="https://ftdichip.com/drivers/d2xx-drivers/">D2XX</a>. Они ведь скорее всего хорошо работают из коробки, верно?</p>
+<p>Скачиваем архив и идём по инструкции из ReadMe.txt в нём</p>
+<div class="highlight"><pre><span></span><code><span class="m">1</span>.<span class="w">  </span>tar<span class="w"> </span>xfvz<span class="w"> </span>libftd2xx-x86_64-1.4.24.tgz
+<span class="m">2</span>.<span class="w">  </span><span class="nb">cd</span><span class="w"> </span>build
+<span class="m">3</span>.<span class="w">  </span>sudo<span class="w"> </span>-s<span class="w"> </span>
+<span class="m">4</span>.<span class="w">  </span>cp<span class="w"> </span>libftd2xx.*<span class="w"> </span>/usr/local/lib
+<span class="m">5</span>.<span class="w">  </span>chmod<span class="w"> </span><span class="m">0755</span><span class="w"> </span>/usr/local/lib/libftd2xx.so.1.4.24
+<span class="m">6</span>.<span class="w">  </span>ln<span class="w"> </span>-sf<span class="w"> </span>/usr/local/lib/libftd2xx.so.1.4.24<span class="w"> </span>/usr/local/lib/libftd2xx.so
+<span class="m">7</span>.<span class="w">  </span><span class="nb">cd</span><span class="w"> </span>..
+<span class="w">    </span>cp<span class="w"> </span>ftd2xx.h<span class="w">  </span>/usr/local/include
+<span class="w">    </span>cp<span class="w"> </span>WinTypes.h<span class="w">  </span>/usr/local/include
+<span class="m">8</span>.<span class="w">  </span>ldconfig<span class="w"> </span>-v
+<span class="m">9</span>.<span class="w">  </span><span class="nb">exit</span>
+</code></pre></div>
+
+<p>Устанавливаем питоний пакет <a href="https://pypi.org/project/ftd2xx/">ftd2xx</a> - это довольно тонкая обёртка над либами от FTDI.</p>
+<div class="highlight"><pre><span></span><code><span class="err">$</span> <span class="n">python3</span> <span class="o">-</span><span class="n">m</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">ftd2xx</span>
+</code></pre></div>
+
+<p>Создаём скрипт <code>test_ftd2xx.py</code> и пытаемся посмотреть доступные устройства</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">ftd2xx</span> <span class="k">as</span> <span class="nn">ft</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">ft</span><span class="o">.</span><span class="n">listDevices</span><span class="p">())</span>
+</code></pre></div>
+
+<p>Упс</p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>./test_ftd2xx.py
+Traceback<span class="w"> </span><span class="o">(</span>most<span class="w"> </span>recent<span class="w"> </span>call<span class="w"> </span>last<span class="o">)</span>:
+<span class="w">  </span>File<span class="w"> </span><span class="s2">&quot;./proto245_ftd2xx.py&quot;</span>,<span class="w"> </span>line<span class="w"> </span><span class="m">3</span>,<span class="w"> </span><span class="k">in</span><span class="w"> </span>&lt;module&gt;
+<span class="w">    </span>import<span class="w"> </span>ftd2xx<span class="w"> </span>as<span class="w"> </span>ft
+<span class="w">  </span>File<span class="w"> </span><span class="s2">&quot;/home/esynr3z/.local/lib/python3.8/site-packages/ftd2xx/__init__.py&quot;</span>,<span class="w"> </span>line<span class="w"> </span><span class="m">12</span>,<span class="w"> </span><span class="k">in</span><span class="w"> </span>&lt;module&gt;
+<span class="w">    </span>from<span class="w"> </span>.ftd2xx<span class="w"> </span>import<span class="w"> </span>*
+<span class="w">  </span>File<span class="w"> </span><span class="s2">&quot;/home/esynr3z/.local/lib/python3.8/site-packages/ftd2xx/ftd2xx.py&quot;</span>,<span class="w"> </span>line<span class="w"> </span><span class="m">15</span>,<span class="w"> </span><span class="k">in</span><span class="w"> </span>&lt;module&gt;
+<span class="w">    </span>from<span class="w"> </span>.<span class="w"> </span>import<span class="w"> </span>_ftd2xx_linux<span class="w"> </span>as<span class="w"> </span>_ft
+<span class="w">  </span>File<span class="w"> </span><span class="s2">&quot;/home/esynr3z/.local/lib/python3.8/site-packages/ftd2xx/_ftd2xx_linux.py&quot;</span>,<span class="w"> </span>line<span class="w"> </span><span class="m">1623</span>,<span class="w"> </span><span class="k">in</span><span class="w"> </span>&lt;module&gt;
+<span class="w">    </span><span class="nv">stime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>_libraries<span class="o">[</span><span class="s1">&#39;libftd2xx.so&#39;</span><span class="o">]</span>.stime
+<span class="w">  </span>File<span class="w"> </span><span class="s2">&quot;/usr/lib/python3.8/ctypes/__init__.py&quot;</span>,<span class="w"> </span>line<span class="w"> </span><span class="m">386</span>,<span class="w"> </span><span class="k">in</span><span class="w"> </span>__getattr__
+<span class="w">    </span><span class="nv">func</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>self.__getitem__<span class="o">(</span>name<span class="o">)</span>
+<span class="w">  </span>File<span class="w"> </span><span class="s2">&quot;/usr/lib/python3.8/ctypes/__init__.py&quot;</span>,<span class="w"> </span>line<span class="w"> </span><span class="m">391</span>,<span class="w"> </span><span class="k">in</span><span class="w"> </span>__getitem__
+<span class="w">    </span><span class="nv">func</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>self._FuncPtr<span class="o">((</span>name_or_ordinal,<span class="w"> </span>self<span class="o">))</span>
+AttributeError:<span class="w"> </span>/usr/local/lib/libftd2xx.so:<span class="w"> </span>undefined<span class="w"> </span>symbol:<span class="w"> </span>stime
+</code></pre></div>
+
+<p>Гугление говорит о том, начиная с определенной версии ядра, этой функции больше нет. Хехе, в процессе поисков наткнулся даже на <a href="https://github.com/abhra0897/gowin-easy-linux/issues/1">такое</a>:</p>
+<div class="highlight"><pre><span></span><code><span class="nx">GoWin</span><span class="w"> </span><span class="nx">programmer</span><span class="p">,</span><span class="w"> </span><span class="nx">the</span><span class="w"> </span><span class="nx">tool</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="nx">uploading</span><span class="w"> </span><span class="nx">the</span><span class="w"> </span><span class="nx">bitstream</span><span class="w"> </span><span class="nx">to</span><span class="w"> </span><span class="nx">the</span><span class="w"> </span><span class="nx">FPGA</span><span class="p">,</span>
+<span class="nx">doesn</span><span class="err">&#39;</span><span class="nx">t</span><span class="w"> </span><span class="nx">work</span><span class="w"> </span><span class="nx">on</span><span class="w"> </span><span class="nx">Linux</span><span class="w"> </span><span class="nx">kernel</span><span class="w"> </span><span class="o">&gt;=</span><span class="mf">5.4</span><span class="p">.</span>
+<span class="nx">Shows</span><span class="w"> </span><span class="nx">attribute</span><span class="w"> </span><span class="nx">error</span><span class="w"> </span><span class="nx">libftd2xx</span><span class="p">.</span><span class="nx">so</span><span class="o">:</span><span class="w"> </span><span class="kc">undefined</span><span class="w"> </span><span class="nx">symbol</span><span class="o">:</span><span class="w"> </span><span class="nx">stime</span><span class="w"> </span><span class="p">.</span>
+
+<span class="nx">The</span><span class="w"> </span><span class="nx">only</span><span class="w"> </span><span class="nx">way</span><span class="w"> </span><span class="nx">to</span><span class="w"> </span><span class="nx">upload</span><span class="w"> </span><span class="nx">bitstream</span><span class="w"> </span><span class="nx">is</span><span class="w"> </span><span class="nx">using</span><span class="w"> </span><span class="nx">open</span><span class="o">-</span><span class="nx">source</span><span class="w"> </span><span class="nx">project</span><span class="w"> </span><span class="nx">OpenFPGALoader</span><span class="p">.</span>
+</code></pre></div>
+
+<p>Чтож, не использовать драйвер от FTDI тоже выход.</p>
+<p>Ладно, просто попробуем закоментировать <code>stime</code> в  <code>blabla/python3.8/site-packages/ftd2xx/_ftd2xx_linux.py</code> (судя по всему, это автоматически сгенерированная обёртка).</p>
+<div class="highlight"><pre><span></span><code><span class="n">stime</span> <span class="o">=</span> <span class="n">_libraries</span><span class="p">[</span><span class="s1">&#39;libftd2xx.so&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">stime</span>
+<span class="n">stime</span><span class="o">.</span><span class="n">restype</span> <span class="o">=</span> <span class="n">c_int</span>
+<span class="c1"># stime(__when)</span>
+<span class="n">stime</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">POINTER</span><span class="p">(</span><span class="n">time_t</span><span class="p">)]</span>
+<span class="n">stime</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> \
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;int stime(unknown * __when)</span>
+<span class="sd">/usr/include/time.h:294&quot;&quot;&quot;</span>
+</code></pre></div>
+
+<p>Запускаем снова и теперь видим устройства</p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>./test_ftd2xx.py<span class="w"> </span>
+<span class="o">[</span>b<span class="s1">&#39;FT3C8Z0AA&#39;</span>,<span class="w"> </span>b<span class="s1">&#39;FT3C8Z0AB&#39;</span><span class="o">]</span>
+</code></pre></div>
+
+<p>Попытаемся подключиться к чипу и сбросить его</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">ftd2xx</span> <span class="k">as</span> <span class="nn">ft</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">dev_id</span> <span class="o">=</span> <span class="n">ft</span><span class="o">.</span><span class="n">listDevices</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;FT3C8Z0AA&#39;</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;No board found!&quot;</span><span class="p">)</span>
+<span class="n">dev</span> <span class="o">=</span> <span class="n">ft</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">dev_id</span><span class="p">)</span>
+<span class="n">dev</span><span class="o">.</span><span class="n">resetDevice</span><span class="p">()</span>
+<span class="n">dev</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Done!&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Что-то пошло не так</p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>./test_ftd2xx.py<span class="w"> </span>
+Traceback<span class="w"> </span><span class="o">(</span>most<span class="w"> </span>recent<span class="w"> </span>call<span class="w"> </span>last<span class="o">)</span>:
+<span class="w">  </span>File<span class="w"> </span><span class="s2">&quot;./proto245_ftd2xx.py&quot;</span>,<span class="w"> </span>line<span class="w"> </span><span class="m">12</span>,<span class="w"> </span><span class="k">in</span><span class="w"> </span>&lt;module&gt;
+<span class="w">    </span><span class="nv">dev</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>ft.open<span class="o">(</span>dev_id<span class="o">)</span>
+<span class="w">  </span>File<span class="w"> </span><span class="s2">&quot;/home/esynr3z/.local/lib/python3.8/site-packages/ftd2xx/ftd2xx.py&quot;</span>,<span class="w"> </span>line<span class="w"> </span><span class="m">100</span>,<span class="w"> </span><span class="k">in</span><span class="w"> </span>open
+<span class="w">    </span>call_ft<span class="o">(</span>_ft.FT_Open,<span class="w"> </span>dev,<span class="w"> </span>c.byref<span class="o">(</span>h<span class="o">))</span>
+<span class="w">  </span>File<span class="w"> </span><span class="s2">&quot;/home/esynr3z/.local/lib/python3.8/site-packages/ftd2xx/ftd2xx.py&quot;</span>,<span class="w"> </span>line<span class="w"> </span><span class="m">44</span>,<span class="w"> </span><span class="k">in</span><span class="w"> </span>call_ft
+<span class="w">    </span>raise<span class="w"> </span>DeviceError<span class="o">(</span>status<span class="o">)</span>
+ftd2xx.ftd2xx.DeviceError:<span class="w"> </span>DEVICE_NOT_OPENED
+</code></pre></div>
+
+<p>Тут я начал проверять соединения, права в системе и гуглить все возможные причины. Даже нашел <a href="https://stackoverflow.com/questions/57119708/unable-to-open-a-connection-with-a-ftd-232-device">ответ</a>. Хотя на самом деле, стоило всего лишь заглянуть в ReadMe.txt на один раздел дальше в "Notes on Kernel Built-in Support of FTDI devices". Классика.</p>
+<div class="highlight"><pre><span></span><code>On<span class="w"> </span>most<span class="w"> </span>distributions,<span class="w"> </span>the<span class="w"> </span>linux<span class="w"> </span>kernel<span class="w"> </span>will<span class="w"> </span>have<span class="w"> </span>either<span class="w"> </span>a<span class="w"> </span>built-in<span class="w"> </span>or<span class="w"> </span>optional
+module<span class="w"> </span>called<span class="w"> </span><span class="s2">&quot;ftdi_sio&quot;</span>.<span class="w">  </span>This<span class="w"> </span>will<span class="w"> </span>detect<span class="w"> </span>an<span class="w"> </span>FTDI<span class="w"> </span>device<span class="w"> </span>and<span class="w"> </span>automatically<span class="w"> </span>
+invoke<span class="w"> </span>the<span class="w"> </span><span class="s2">&quot;usbserial&quot;</span><span class="w"> </span>module<span class="w"> </span>and<span class="w"> </span>create<span class="w"> </span>devices<span class="w"> </span>such<span class="w"> </span>as<span class="w"> </span><span class="s2">&quot;/dev/ttyUSB0&quot;</span>.
+
+When<span class="w"> </span>the<span class="w"> </span>ftdi_sio<span class="w"> </span>module<span class="w"> </span>is<span class="w"> </span>controlling<span class="w"> </span>an<span class="w"> </span>FTDI<span class="w"> </span>device<span class="w"> </span>it<span class="w"> </span>is<span class="w"> </span>not<span class="w"> </span>available<span class="w"> </span>to
+libftd2xx.<span class="w">  </span>If<span class="w"> </span>the<span class="w"> </span>library<span class="w"> </span>attempts<span class="w"> </span>to<span class="w"> </span>access<span class="w"> </span>the<span class="w"> </span>device<span class="w"> </span>it<span class="w"> </span>will<span class="w"> </span>receive<span class="w"> </span>a
+message<span class="w"> </span><span class="s2">&quot;FT_Open failed&quot;</span>.
+
+<span class="m">1</span><span class="o">)</span><span class="w"> </span>Remove<span class="w"> </span>the<span class="w"> </span>ftdi_sio<span class="w"> </span>module<span class="w"> </span>from<span class="w"> </span>the<span class="w"> </span>running<span class="w"> </span>kernel:
+...
+<span class="m">2</span><span class="o">)</span><span class="w"> </span>Build<span class="w"> </span>a<span class="w"> </span>new<span class="w"> </span>kernel<span class="w"> </span>without<span class="w"> </span>the<span class="w"> </span>ftdi_sio<span class="w"> </span>module.<span class="w"> </span>
+...
+<span class="m">3</span><span class="o">)</span><span class="w"> </span>Use<span class="w"> </span>a<span class="w"> </span>udev<span class="w"> </span>unbind<span class="w"> </span>sysfs<span class="w"> </span>interface<span class="w"> </span>to<span class="w"> </span>disable<span class="w"> </span>devices<span class="w"> </span>as<span class="w"> </span>they<span class="w"> </span>are<span class="w"> </span>connected.
+...
+</code></pre></div>
+
+<p>Ок, пойдем первым путем. Это действо нужно выполнять это каждый раз после подключения FT2232H. Можно конечно <a href="https://stackoverflow.com/questions/33981056/ftdi-d2xx-conflict-with-ftdi-sio-on-linux-how-to-remove-ftdi-sio-automatically">автоматизировать</a>, но пока и так пойдет.</p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>sudo<span class="w"> </span>rmmod<span class="w"> </span>ftdi_sio
+</code></pre></div>
+
+<p>Снова выполняем скрипт</p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>./test_ftd2xx.py<span class="w"> </span>
+Done!
+</code></pre></div>
+
+<p>Отлично. "Дорисовываем остальную часть совы". Полный код <a href="https://github.com/esynr3z/proto245/blob/master/examples/ft2232h_de10lite/test_ftd2xx.py">здесь</a>.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">ftd2xx</span> <span class="k">as</span> <span class="nn">ft</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">time</span><span class="p">,</span> <span class="n">sleep</span>
+
+<span class="n">KiB</span> <span class="o">=</span> <span class="mi">1024</span>
+<span class="n">MiB</span> <span class="o">=</span> <span class="n">KiB</span> <span class="o">*</span> <span class="mi">1024</span>
+
+<span class="k">class</span> <span class="nc">FPGA</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ftdi_serial</span><span class="p">,</span> <span class="n">fifo245_mode</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ftdi_serial</span> <span class="o">=</span> <span class="n">ftdi_serial</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fifo245_mode</span> <span class="o">=</span> <span class="n">fifo245_mode</span>
+
+    <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">ftdev_id</span> <span class="o">=</span> <span class="n">ft</span><span class="o">.</span><span class="n">listDevices</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ftdi_serial</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;No board found!&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ftdev</span> <span class="o">=</span> <span class="n">ft</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">ftdev_id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ftdev</span><span class="o">.</span><span class="n">resetDevice</span><span class="p">()</span>
+        <span class="c1"># AN130 for more details about commands below</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ftdev</span><span class="o">.</span><span class="n">setBitMode</span><span class="p">(</span><span class="mh">0xff</span><span class="p">,</span> <span class="mh">0x40</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fifo245_mode</span> <span class="o">==</span> <span class="s1">&#39;sync&#39;</span> <span class="k">else</span> <span class="mh">0x00</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ftdev</span><span class="o">.</span><span class="n">setTimeouts</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>  <span class="c1"># in ms</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ftdev</span><span class="o">.</span><span class="n">setUSBParameters</span><span class="p">(</span><span class="mi">64</span> <span class="o">*</span> <span class="n">KiB</span><span class="p">,</span> <span class="mi">64</span> <span class="o">*</span> <span class="n">KiB</span><span class="p">)</span>  <span class="c1"># set rx, tx buffer size in bytes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ftdev</span><span class="o">.</span><span class="n">setFlowControl</span><span class="p">(</span><span class="n">ft</span><span class="o">.</span><span class="n">defines</span><span class="o">.</span><span class="n">FLOW_RTS_CTS</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_val</span><span class="p">,</span> <span class="n">exc_tb</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ftdev</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">test_read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">total_bytes</span><span class="o">=</span><span class="mi">1</span> <span class="o">*</span> <span class="n">MiB</span><span class="p">):</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="nf">test_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">total_bytes</span><span class="o">=</span><span class="mi">1</span> <span class="o">*</span> <span class="n">MiB</span><span class="p">):</span>
+        <span class="o">...</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">FPGA</span><span class="p">(</span><span class="n">ftdi_serial</span><span class="o">=</span><span class="sa">b</span><span class="s1">&#39;FT3C8Z0AA&#39;</span><span class="p">,</span> <span class="n">fifo245_mode</span><span class="o">=</span><span class="s1">&#39;sync&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">de10lite</span><span class="p">:</span>
+        <span class="n">de10lite</span><span class="o">.</span><span class="n">test_read</span><span class="p">(</span><span class="mi">100</span> <span class="o">*</span> <span class="n">MiB</span><span class="p">)</span>
+        <span class="n">de10lite</span><span class="o">.</span><span class="n">test_write</span><span class="p">(</span><span class="mi">100</span> <span class="o">*</span> <span class="n">MiB</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Задумка простая:</p>
+<ul>
+<li>Открываем чип, включаем режим синхронного FIFO, настраиваем размеры буферов и таймауты в драйвере.</li>
+<li>Затем делаем тест на чтение - отправляем код команды и количество ожидаемых байт в ПЛИС, она начинает генерировать данные непрерывно (просто увеличивающееся значение счётчика), на стороне софта проверяем что всё корректно приняли.</li>
+<li>Потом делаем тест на запись - отправляем в ПЛИС код команды и количество байт, которые хотим записать, отправляем данные, и ждём от ПЛИС ответа, что нужное количество байт было принято, и они все были корректны.</li>
+</ul>
+<p>Поехали</p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>./test_ftd2xx.py<span class="w"> </span>
+Read<span class="w"> </span><span class="m">100</span>.00<span class="w"> </span>MiB<span class="w"> </span><span class="o">(</span><span class="m">104857600</span><span class="w"> </span>bytes<span class="o">)</span><span class="w"> </span>from<span class="w"> </span>FPGA<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="m">10</span>.846953<span class="w"> </span>seconds<span class="w"> </span><span class="o">(</span><span class="m">9</span>.22<span class="w"> </span>MiB/s<span class="o">)</span>
+Verify<span class="w"> </span>data:<span class="w"> </span>ok
+Wrote<span class="w"> </span><span class="m">100</span>.00<span class="w"> </span>MiB<span class="w"> </span><span class="o">(</span><span class="m">104857600</span><span class="w"> </span>bytes<span class="o">)</span><span class="w"> </span>to<span class="w"> </span>FPGA<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="m">2</span>.632750<span class="w"> </span>seconds<span class="w"> </span><span class="o">(</span><span class="m">37</span>.98<span class="w"> </span>MiB/s<span class="o">)</span>
+Verify<span class="w"> </span>data:<span class="w"> </span>ok
+</code></pre></div>
+
+<p>Хмм, со скоростью чтения явно что-то не так. Экспереметируем, гуглим, и находим вот это:</p>
+<ul>
+<li><a href="https://github.com/0x6a77/JD2XX/issues/9">Data transfer speed is limited to 8MByte/s with FT232H in Synchronous FIFO style</a></li>
+<li><a href="https://www.ftdicommunity.com/index.php?topic=40.0">Reading data from FT232h via FT2XX driver - data loss on Raspberry Pi</a></li>
+</ul>
+<p>TL;DR. Да, знаем что в драйвере под линукс баг, ограничивающий скорость чтения, да, править не планируем, используйте альтернативы.</p>
+<p>Для чистоты совести проверим работу под Windows 7</p>
+<div class="highlight"><pre><span></span><code>D:<span class="se">\&gt;</span>python<span class="w"> </span>test_ftd2xx.py
+Read<span class="w"> </span><span class="m">100</span>.00<span class="w"> </span>MiB<span class="w"> </span><span class="o">(</span><span class="m">104857600</span><span class="w"> </span>bytes<span class="o">)</span><span class="w"> </span>from<span class="w"> </span>FPGA<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="m">2</span>.293204<span class="w"> </span>seconds<span class="w"> </span><span class="o">(</span><span class="m">43</span>.61<span class="w"> </span>MiB/s<span class="o">)</span>
+Verify<span class="w"> </span>data:<span class="w"> </span>ok
+Wrote<span class="w"> </span><span class="m">100</span>.00<span class="w"> </span>MiB<span class="w"> </span><span class="o">(</span><span class="m">104857600</span><span class="w"> </span>bytes<span class="o">)</span><span class="w"> </span>to<span class="w"> </span>FPGA<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="m">3</span>.478806<span class="w"> </span>seconds<span class="w"> </span><span class="o">(</span><span class="m">28</span>.75<span class="w"> </span>MiB/s<span class="o">)</span>
+Verify<span class="w"> </span>data:<span class="w"> </span>ok
+</code></pre></div>
+
+<p>Да, похоже что не врали. Ну значит с драйвером от FTDI нам не пути, идём смотреть альтернативы.</p>
+<h3 id="pylibftdi-libftdi">pylibftdi (libftdi)</h3>
+<p>Попробуем аналог оригинального драйвера с открытым исходным кодом - <a href="https://www.intra2net.com/en/developer/libftdi/">libftdi</a>. Он вроде как даже <a href="https://elinux.org/Libftdi_vs_FTD2XX">не должен проигрывать по скорости</a>. </p>
+<p>Устанавливаем сам драйвер и модуль-обёртку <a href="https://pypi.org/project/pylibftdi/">pylibftdi</a>.</p>
+<div class="highlight"><pre><span></span><code><span class="err">$</span> <span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">libftdi1</span>
+<span class="err">$</span> <span class="n">python3</span> <span class="o">-</span><span class="n">m</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">pylibftdi</span>
+</code></pre></div>
+
+<p>Проверяем что все установилось успешно</p>
+<div class="highlight"><pre><span></span><code><span class="err">$</span> <span class="n">python3</span> <span class="o">-</span><span class="n">m</span> <span class="n">pylibftdi</span><span class="o">.</span><span class="n">examples</span><span class="o">.</span><span class="n">info</span>
+<span class="n">pylibftdi</span> <span class="n">version</span>     <span class="p">:</span> <span class="mf">0.18.0</span>
+<span class="n">libftdi</span> <span class="n">version</span>       <span class="p">:</span> <span class="n">libftdi_version</span><span class="p">(</span><span class="n">major</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">minor</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">micro</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">version_str</span><span class="o">=</span><span class="sa">b</span><span class="s1">&#39;1.4&#39;</span><span class="p">,</span> <span class="n">snapshot_str</span><span class="o">=</span><span class="sa">b</span><span class="s1">&#39;unknown&#39;</span><span class="p">)</span>
+<span class="n">libftdi</span> <span class="n">library</span> <span class="n">name</span>  <span class="p">:</span> <span class="n">libftdi1</span><span class="o">.</span><span class="n">so</span><span class="mf">.2</span>
+<span class="n">libusb</span> <span class="n">version</span>        <span class="p">:</span> <span class="n">libusb_version</span><span class="p">(</span><span class="n">major</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">minor</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">micro</span><span class="o">=</span><span class="mi">23</span><span class="p">,</span> <span class="n">nano</span><span class="o">=</span><span class="mi">11397</span><span class="p">,</span> <span class="n">rc</span><span class="o">=</span><span class="sa">b</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">describe</span><span class="o">=</span><span class="sa">b</span><span class="s1">&#39;http://libusb.info&#39;</span><span class="p">)</span>
+<span class="n">libusb</span> <span class="n">library</span> <span class="n">name</span>   <span class="p">:</span> <span class="n">libusb</span><span class="o">-</span><span class="mf">1.0</span><span class="o">.</span><span class="n">so</span><span class="mf">.0</span>
+<span class="n">Python</span> <span class="n">version</span>        <span class="p">:</span> <span class="mf">3.8.5</span>
+<span class="n">OS</span> <span class="n">platform</span>           <span class="p">:</span> <span class="n">Linux</span><span class="o">-</span><span class="mf">5.8.0</span><span class="o">-</span><span class="mi">55</span><span class="o">-</span><span class="n">generic</span><span class="o">-</span><span class="n">x86_64</span><span class="o">-</span><span class="k">with</span><span class="o">-</span><span class="n">glibc2</span><span class="mf">.29</span>
+</code></pre></div>
+
+<p>Составляем минимальный шаблон, который может открыть устройство и включить синхронный режим</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">pylibftdi</span> <span class="kn">import</span> <span class="n">Driver</span><span class="p">,</span> <span class="n">Device</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">time</span><span class="p">,</span> <span class="n">sleep</span>
+
+<span class="n">KiB</span> <span class="o">=</span> <span class="mi">1024</span>
+<span class="n">MiB</span> <span class="o">=</span> <span class="n">KiB</span> <span class="o">*</span> <span class="mi">1024</span>
+
+<span class="k">class</span> <span class="nc">FPGA</span><span class="p">(</span><span class="n">Device</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ftdi_serial</span><span class="p">,</span> <span class="n">fifo245_mode</span><span class="p">,</span> <span class="n">chunk_size</span><span class="o">=</span><span class="mi">64</span> <span class="o">*</span> <span class="n">KiB</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">device_id</span><span class="o">=</span><span class="n">ftdi_serial</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;b&#39;</span><span class="p">,</span>
+                         <span class="n">lazy_open</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">chunk_size</span><span class="o">=</span><span class="n">chunk_size</span><span class="p">,</span> <span class="n">interface_select</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fifo245_mode</span> <span class="o">=</span> <span class="n">fifo245_mode</span>
+
+    <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">open</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ftdi_fn</span><span class="o">.</span><span class="n">ftdi_set_bitmode</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mh">0x40</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fifo245_mode</span> <span class="o">==</span> <span class="s1">&#39;sync&#39;</span> <span class="k">else</span> <span class="mh">0x00</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_val</span><span class="p">,</span> <span class="n">exc_tb</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">FPGA</span><span class="p">(</span><span class="n">ftdi_serial</span><span class="o">=</span><span class="s1">&#39;FT3C8Z0A&#39;</span><span class="p">,</span> <span class="n">fifo245_mode</span><span class="o">=</span><span class="s1">&#39;sync&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">de10lite</span><span class="p">:</span>
+        <span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Проверяем - ошибок при запуске нет, значит скорее всего всё работать будет. Добавляем тестовую логику, аналогично предыдущему примеру. Получается вот такой <a href="https://github.com/esynr3z/proto245/blob/master/examples/ft2232h_de10lite/test_pylibftdi.py">скрипт</a>. Запускаем:</p>
+<div class="highlight"><pre><span></span><code><span class="err">$</span> <span class="o">./</span><span class="n">test_pylibftdi</span><span class="o">.</span><span class="n">py</span> 
+<span class="n">Read</span> <span class="mf">100.00</span> <span class="n">MiB</span> <span class="p">(</span><span class="mi">104857600</span> <span class="nb">bytes</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">FPGA</span> <span class="ow">in</span> <span class="mf">2.705440</span> <span class="n">seconds</span> <span class="p">(</span><span class="mf">36.96</span> <span class="n">MiB</span><span class="o">/</span><span class="n">s</span><span class="p">)</span>
+<span class="n">Verify</span> <span class="n">data</span><span class="p">:</span> <span class="n">ok</span>
+<span class="n">Wrote</span> <span class="mf">100.00</span> <span class="n">MiB</span> <span class="p">(</span><span class="mi">104857600</span> <span class="nb">bytes</span><span class="p">)</span> <span class="n">to</span> <span class="n">FPGA</span> <span class="ow">in</span> <span class="mf">2.717165</span> <span class="n">seconds</span> <span class="p">(</span><span class="mf">36.80</span> <span class="n">MiB</span><span class="o">/</span><span class="n">s</span><span class="p">)</span>
+<span class="n">Verify</span> <span class="n">data</span><span class="p">:</span> <span class="n">ok</span>
+</code></pre></div>
+
+<p>Во! Уже похоже на нормальную скорость. Возможно, если немного оптимизировать методы записи и чтения в этой библиотеке, можно выжать и побольше. Но для интереса можно сделать и по-другому...</p>
+<h3 id="ftdi1-libftdi">ftdi1 (libftdi)</h3>
+<p>В pylibftdi автор пошёл путем написания своего слоя абстракции над libftdi. Однако, вместе с исходниками libftdi поставляется <code>.i</code> файл для <a href="http://www.swig.org/">SWIG</a>. Если в двух словах, то можно сгенировать Python обёртку для libftdi самостоятельно и вызывать C функции библиотеки практически нативно и без привлечения <a href="https://docs.python.org/3/library/ctypes.html">ctypes</a>. Почему бы и не попробовать.</p>
+<p>Устанавливаем зависимости и клонируем репозиторий с исходниками</p>
+<div class="highlight"><pre><span></span><code><span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">build</span><span class="o">-</span><span class="n">essential</span> <span class="n">git</span><span class="o">-</span><span class="n">core</span> <span class="n">cmake</span> <span class="n">libusb</span><span class="o">-</span><span class="mf">1.0</span><span class="o">-</span><span class="mi">0</span><span class="o">-</span><span class="n">dev</span> <span class="n">swig</span> <span class="n">python3</span><span class="o">-</span><span class="n">dev</span> <span class="n">libconfuse</span><span class="o">-</span><span class="n">dev</span>
+<span class="n">git</span> <span class="n">clone</span> <span class="n">git</span><span class="p">:</span><span class="o">//</span><span class="n">developer</span><span class="o">.</span><span class="n">intra2net</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">libftdi</span>
+</code></pre></div>
+
+<p>Для того чтобы обёртка была под Python 3 придётся немного подправить скрипты сборки. Открываем файл <code>libftdi/python/CMakeLists.txt</code> и меняем</p>
+<div class="highlight"><pre><span></span><code><span class="n">find_package</span> <span class="p">(</span> <span class="n">PythonInterp</span> <span class="n">REQUIRED</span> <span class="p">)</span>
+<span class="n">find_package</span> <span class="p">(</span> <span class="n">PythonLibs</span> <span class="n">REQUIRED</span> <span class="p">)</span>
+</code></pre></div>
+
+<p>на</p>
+<div class="highlight"><pre><span></span><code><span class="n">find_package</span> <span class="p">(</span> <span class="n">PythonInterp</span> <span class="mf">3.8</span> <span class="n">REQUIRED</span> <span class="p">)</span>
+<span class="n">find_package</span> <span class="p">(</span> <span class="n">PythonLibs</span> <span class="mf">3.8</span> <span class="n">REQUIRED</span> <span class="p">)</span>
+</code></pre></div>
+
+<p>Собираем и устанавливаем полученный модуль</p>
+<div class="highlight"><pre><span></span><code><span class="n">cd</span> <span class="n">libftdi</span>
+<span class="n">mkdir</span> <span class="n">build</span>
+<span class="n">cd</span> <span class="n">build</span>
+<span class="n">cmake</span> <span class="o">-</span><span class="n">DSTATICLIBS</span><span class="o">=</span><span class="n">OFF</span> <span class="o">-</span><span class="n">DFTDI_EEPROM</span><span class="o">=</span><span class="n">OFF</span> <span class="o">-</span><span class="n">DEXAMPLES</span><span class="o">=</span><span class="n">OFF</span> <span class="o">-</span><span class="n">DPYTHON_BINDINGS</span><span class="o">=</span><span class="n">ON</span> <span class="o">../</span>
+<span class="n">make</span>
+<span class="n">cp</span> <span class="n">python</span><span class="o">/*</span><span class="n">ftdi1</span><span class="o">*</span> <span class="o">~/.</span><span class="n">local</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.8</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span>
+</code></pre></div>
+
+<p>По традиции делаем сперва рыбу</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">ftdi1</span> <span class="k">as</span> <span class="nn">ft</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">time</span><span class="p">,</span> <span class="n">sleep</span>
+
+<span class="k">class</span> <span class="nc">FPGA</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">serial</span><span class="p">,</span> <span class="n">sync</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">vid</span><span class="o">=</span><span class="mh">0x0403</span><span class="p">,</span> <span class="n">pid</span><span class="o">=</span><span class="mh">0x6010</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_vid</span> <span class="o">=</span> <span class="n">vid</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pid</span> <span class="o">=</span> <span class="n">pid</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_serial</span> <span class="o">=</span> <span class="n">serial</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sync</span> <span class="o">=</span> <span class="n">sync</span>
+
+    <span class="k">def</span> <span class="nf">_err_wrap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ret</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">ret</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># prints last error message</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> (</span><span class="si">%d</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ft</span><span class="o">.</span><span class="n">get_error_string</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="p">),</span> <span class="n">ret</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ret</span>
+
+    <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span> <span class="o">=</span> <span class="n">ft</span><span class="o">.</span><span class="n">new</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_err_wrap</span><span class="p">(</span><span class="n">ft</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_err_wrap</span><span class="p">(</span><span class="n">ft</span><span class="o">.</span><span class="n">usb_open_desc</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vid</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pid</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_serial</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_err_wrap</span><span class="p">(</span><span class="n">ft</span><span class="o">.</span><span class="n">set_bitmode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="p">,</span> <span class="mh">0xff</span><span class="p">,</span> <span class="n">ft</span><span class="o">.</span><span class="n">BITMODE_SYNCFF</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sync</span> <span class="k">else</span> <span class="n">ft</span><span class="o">.</span><span class="n">BITMODE_RESET</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_err_wrap</span><span class="p">(</span><span class="n">ft</span><span class="o">.</span><span class="n">usb_close</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="p">))</span>
+        <span class="n">ft</span><span class="o">.</span><span class="n">deinit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">bytes_wrote</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_err_wrap</span><span class="p">(</span><span class="n">ft</span><span class="o">.</span><span class="n">write_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="p">,</span> <span class="n">data</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">bytes_wrote</span>
+
+    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="n">bytes_read</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">ft</span><span class="o">.</span><span class="n">read_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ctx</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_err_wrap</span><span class="p">(</span><span class="n">bytes_read</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">bytes_read</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">FPGA</span><span class="p">(</span><span class="s1">&#39;FT3C8Z0A&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">de10lite</span><span class="p">:</span>
+        <span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Наполняем тестовой логикой и чуть фиксим в процессе отладки - получается вот <a href="https://github.com/esynr3z/proto245/blob/master/examples/ft2232h_de10lite/test_ftdi1.py">это</a>. Запускаем</p>
+<div class="highlight"><pre><span></span><code><span class="err">$</span> <span class="o">./</span><span class="n">test_ftdi1</span><span class="o">.</span><span class="n">py</span> 
+<span class="n">Read</span> <span class="mf">100.00</span> <span class="n">MiB</span> <span class="p">(</span><span class="mi">104857600</span> <span class="nb">bytes</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">FPGA</span> <span class="ow">in</span> <span class="mf">2.422061</span> <span class="n">seconds</span> <span class="p">(</span><span class="mf">41.29</span> <span class="n">MiB</span><span class="o">/</span><span class="n">s</span><span class="p">)</span>
+<span class="n">Verify</span> <span class="n">data</span><span class="p">:</span> <span class="n">ok</span>
+<span class="n">Wrote</span> <span class="mf">100.00</span> <span class="n">MiB</span> <span class="p">(</span><span class="mi">104857600</span> <span class="nb">bytes</span><span class="p">)</span> <span class="n">to</span> <span class="n">FPGA</span> <span class="ow">in</span> <span class="mf">2.342588</span> <span class="n">seconds</span> <span class="p">(</span><span class="mf">42.69</span> <span class="n">MiB</span><span class="o">/</span><span class="n">s</span><span class="p">)</span>
+<span class="n">Verify</span> <span class="n">data</span><span class="p">:</span> <span class="n">ok</span>
+</code></pre></div>
+
+<p>Другое дело! Заявленные даташитом "upto 40 Mbytes/Sec" уже есть. Можно было бы на этом и остановиться, но...</p>
+<h3 id="pyusb-libusb">pyusb (libusb)</h3>
+<p>Гулять так гулять. Уберем лишнюю прослойку в виде libftdi, и будем читать/писать контрольные точки USB напрямую с помощью <a href="https://github.com/pyusb/pyusb">pyusb</a>.</p>
+<p>Всего нам доступно 3 конечных точки: </p>
+<ul>
+<li>CONTROL - для настройки режимов и обслуживания USB</li>
+<li>IN - для чтения данных из приемного FIFO чипа</li>
+<li>OUT - для записи данных в передающее FIFO</li>
+</ul>
+<p>Работа с последними двумя довольно прозрачна - пишешь байты, они попадают в буфер, читаешь - получаешь данные из буфера. Но нужно ещё настроить синхронный режим. Очевидно, что нигде в документации не сказано как сформировать транзакцию в управляющую точку чтобы включить этот режим. Однако, можно просто "послушать" как это делает драйвер. Например, с помощью <a href="https://wiki.wireshark.org/CaptureSetup/USB">Wireshark</a>.</p>
+<p>Gotcha! Вот она прошла - <code>0x40</code> это как раз режим синхронного FIFO.</p>
+<p><img alt="usb_pkt" src="../../blog/2021-07-16-ftdi-ft245/usb_pkt.png"></p>
+<p>Теперь можно собрать минимально рабочий пример</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">usb.core</span>
+<span class="kn">import</span> <span class="nn">usb.util</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">time</span><span class="p">,</span> <span class="n">sleep</span>
+
+<span class="k">class</span> <span class="nc">FPGA</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">serial</span><span class="p">,</span> <span class="n">sync</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">vid</span><span class="o">=</span><span class="mh">0x0403</span><span class="p">,</span> <span class="n">pid</span><span class="o">=</span><span class="mh">0x6010</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_vid</span> <span class="o">=</span> <span class="n">vid</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pid</span> <span class="o">=</span> <span class="n">pid</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_serial</span> <span class="o">=</span> <span class="n">serial</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sync</span> <span class="o">=</span> <span class="n">sync</span>
+
+    <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">dev</span> <span class="o">=</span> <span class="n">usb</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">idVendor</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_vid</span><span class="p">,</span> <span class="n">idProduct</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_pid</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dev</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">dev</span><span class="o">.</span><span class="n">serial_number</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_serial</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Device was not found!&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ft</span> <span class="o">=</span> <span class="n">dev</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ft</span><span class="o">.</span><span class="n">is_kernel_driver_active</span><span class="p">(</span><span class="mi">0</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ft</span><span class="o">.</span><span class="n">detach_kernel_driver</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">usb</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">claim_interface</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ft</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ft</span><span class="o">.</span><span class="n">ctrl_transfer</span><span class="p">(</span><span class="n">bmRequestType</span><span class="o">=</span><span class="mh">0x40</span><span class="p">,</span> <span class="n">bRequest</span><span class="o">=</span><span class="mi">11</span><span class="p">,</span> <span class="n">wValue</span><span class="o">=</span><span class="mh">0x000140ff</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sync</span> <span class="k">else</span> <span class="mh">0x000000ff</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">traceback</span><span class="p">):</span>
+        <span class="n">usb</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">release_interface</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ft</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ft</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="mh">0x2</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>  <span class="c1"># OUT EP</span>
+
+    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ft</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mh">0x81</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>  <span class="c1"># IN EP</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">FPGA</span><span class="p">(</span><span class="s1">&#39;FT3C8Z0A&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">de10lite</span><span class="p">:</span>
+        <span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Отлично. Теперь добавляем логику для тестов в <a href="https://github.com/esynr3z/proto245/blob/master/examples/ft2232h_de10lite/test_pyusb.py">скрипт</a> и запускаем</p>
+<div class="highlight"><pre><span></span><code><span class="err">$</span> <span class="o">./</span><span class="n">test_pyusb</span><span class="o">.</span><span class="n">py</span> 
+<span class="n">Read</span> <span class="mf">100.00</span> <span class="n">MiB</span> <span class="p">(</span><span class="mi">104857600</span> <span class="nb">bytes</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">FPGA</span> <span class="ow">in</span> <span class="mf">2.335567</span> <span class="n">seconds</span> <span class="p">(</span><span class="mf">42.82</span> <span class="n">MiB</span><span class="o">/</span><span class="n">s</span><span class="p">)</span>
+<span class="n">Verify</span> <span class="n">data</span><span class="p">:</span> <span class="n">ok</span>
+<span class="n">Wrote</span> <span class="mf">10.00</span> <span class="n">MiB</span> <span class="p">(</span><span class="mi">10485760</span> <span class="nb">bytes</span><span class="p">)</span> <span class="n">to</span> <span class="n">FPGA</span> <span class="ow">in</span> <span class="mf">0.239542</span> <span class="n">seconds</span> <span class="p">(</span><span class="mf">41.75</span> <span class="n">MiB</span><span class="o">/</span><span class="n">s</span><span class="p">)</span>
+<span class="n">Verify</span> <span class="n">data</span><span class="p">:</span> <span class="n">ok</span>
+</code></pre></div>
+
+<p>Выше головы прыгнуть не получилось, но вот некоторые нюансы появились:</p>
+<ul>
+<li>FT2232H (ровно как и другие FT2xx) в каждой usb транзакции вставляет в начало два байта со статусом модемных сигналов. Другие драйвера вырезают их автоматически, здесь это приходится делать в постпроцессинге, т.к. на лету это режет скорость в разы. Поэтому полученная скорость чтения - это несколько лукавая цифра.</li>
+<li>В тесте на запись пишу 10МБ вместо обычных 100МБ как ранее, т.к. при большом объеме данных pyusb падает с ошибкой <code>usb.core.USBError: [Errno 5] Input/Output Error</code>. Экспереметировал, пробовал бить данные на кусочки, но так и не смог её обойти.</li>
+</ul>
+<p>В целом, опыт интересный, но без веской причины стучать в конечные точки руками наверное не стоит, лучше воспользоваться драйвером.</p>
+<h2 id="ft600">Про FT600</h2>
+<p>В планах было написать и о работе со "старшим братом". Но тут всё сложилось интересно. У меня пока еще не было этого чипа на столе, но один добрый человек за много километров от меня подключил отладку с FT600 к девборде с Lattice, подцепил это всё к Raspberry Pi, воткнул камеру и дал мне ssh. Поигрался я какое-то время, и понял что без отладчика и анализатора как-то совсем грустно - юзать бета-версию драйверов FTDI (драйвера под ARM они пока еще не выложили в открытый доступ), синтезить Yosys'ом без констрейнтов на IO и наблюдать за работой по мутному и дерганному видео, то ещё удовольствие. Поэтому отложил это дело до тех пор, пока чип не появится живьём у меня.</p>
+  </div>
+  <div class="tag-cloud">
+    <p>
+      <a href="../../tag/fpga/">fpga</a>
+      <a href="../../tag/ftdi/">ftdi</a>
+      <a href="../../tag/usb/">usb</a>
+    </p>
+  </div>
+
+
+  <div class="neighbors">
+    <a class="btn float-left" href="../../blog/2021-04-24-xilinx-axi-verification-ip/" title="Xilinx AXI Verification IP">
+      <i class="fa fa-angle-left"></i> Previous Post
+    </a>
+    <a class="btn float-right" href="../../blog/2021-09-03-corsair/" title="Corsair - генератор карты контрольно-статусных регистров">
+      Next Post <i class="fa fa-angle-right"></i>
+    </a>
+  </div>
+
+  <div class="related-posts">
+    <h4>You might enjoy</h4>
+    <ul class="related-posts">
+      <li><a href="../../blog/2021-04-24-xilinx-axi-verification-ip/">Xilinx AXI Verification IP</a></li>
+    </ul>
+  </div>
+
+
+
+<!-- Giscus -->
+<script>
+    function getCurrentTheme() {
+        if (document.body.classList.contains('dark-theme')) {
+            return 'dark'
+        } else if (document.body.classList.contains('light-theme')) {
+            return 'light'
+        } else {
+            var darkThemeMatch = window.matchMedia('(prefers-color-scheme: dark)');
+            var theme = localStorage.getItem('themeOverride');
+            if (theme !== 'light' && theme !== 'dark') {
+                if (theme === 'browser' || enableAutoDetectTheme) {
+                    theme = darkThemeMatch.matches ? 'dark' : 'light';
+                } else {
+                    theme = "dark";
+                }
+            }
+            return theme;
+        }
+    }
+
+    function updateGiscusTheme() {
+        console.log("updateGiscusTheme() called");
+
+        function sendMessage(message) {
+            const iframe = document.querySelector('iframe.giscus-frame');
+            if (!iframe) return;
+            iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+
+        const currentTheme = getCurrentTheme();
+        console.log("Changing theme to ", currentTheme);
+        sendMessage({
+            setConfig: {
+                theme: currentTheme,
+            },
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const giscusAttributes = {
+            "src": "https://giscus.app/client.js",
+            "data-repo": "positive-slack/positive-slack.github.io",
+            "data-repo-id": "R_kgDOK9PAQQ",
+            "data-category": "Posts",
+            "data-category-id": "DIC_kwDOK9PAQc4CcALQ",
+            "data-mapping": "title",
+            "data-strict": "1",
+            "data-reactions-enabled": "1",
+            "data-emit-metadata": "0",
+            "data-input-position": "bottom",
+            "data-theme": getCurrentTheme(),
+            "data-lang": "en",
+            "crossorigin": "anonymous",
+            "async": "",
+        };
+
+        // Dynamically create script tag
+        const giscusScript = document.createElement("script");
+        Object.entries(giscusAttributes).forEach(([key, value]) => giscusScript.setAttribute(key, value));
+        const targetElement = document.querySelector('article');
+        targetElement.appendChild(giscusScript);
+        updateGiscusTheme()
+
+        // Update giscus theme when theme switcher is clicked
+        document.body.addEventListener('themeChange', updateGiscusTheme);
+    });
+</script>
+
+<noscript>
+    Please enable JavaScript to view comments.
+</noscript>
+<!-- End Giscus -->
+</article>
+
+<footer>
+<p>
+  &copy; 2024  - This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/deed.en_US" target="_blank">Creative Commons Attribution-ShareAlike 4.0 International License</a>
+</p>
+<p>
+Built with <a href="http://getpelican.com" target="_blank">Pelican</a> using <a href="http://bit.ly/flex-pelican" target="_blank">Flex</a> theme
+  <span class="footer-separator">|</span>
+  Switch to the <a href="javascript:void(0)" onclick="theme.switch(`dark`)">dark</a> | <a href="javascript:void(0)" onclick="theme.switch(`light`)">light</a> | <a href="javascript:void(0)" onclick="theme.switch(`browser`)">browser</a> theme
+  <script id="dark-theme-script"
+          src="../../theme/dark-theme/dark-theme.min.js"
+          data-enable-auto-detect-theme="True"
+          data-default-theme="dark"
+          type="text/javascript">
+  </script>
+</p><p>
+  <a rel="license"
+     href="http://creativecommons.org/licenses/by-sa/4.0/"
+     target="_blank">
+    <img alt="Creative Commons License"
+         title="Creative Commons License"
+         style="border-width:0"
+           src="https://i.creativecommons.org/l/by-sa/4.0/80x15.png"
+         width="80"
+         height="15"/>
+  </a>
+</p>  <p>DISCLAIMER. Everything I share here are my own thoughts and opinions. They're not connected to my employer in any way.</p>
+</footer>  </main>
+
+<script type="application/ld+json">
+{
+  "@context" : "http://schema.org",
+  "@type" : "Blog",
+  "name": " positive slack blog ",
+  "url" : "../..",
+  "image": "/assets/logo.jpg",
+  "description": "digital design, verification and collaterals"
+}
+</script>
+</body>
+</html>

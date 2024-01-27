@@ -1,0 +1,781 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="HandheldFriendly" content="True" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,400;0,700;1,400&family=Source+Sans+Pro:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" href="../../theme/stylesheet/style.min.css">
+
+    <link id="dark-theme-style" rel="stylesheet" type="text/css"
+          media="(prefers-color-scheme: dark), (prefers-color-scheme: no-preference)"
+    href="../../theme/stylesheet/dark-theme.min.css">
+
+    <link id="pygments-dark-theme" rel="stylesheet" type="text/css"
+              media="(prefers-color-scheme: dark), (prefers-color-scheme: no-preference)"
+          href="../../theme/pygments/monokai.min.css">
+    <link id="pygments-light-theme" rel="stylesheet" type="text/css"
+              media="(prefers-color-scheme: light)"
+          href="../../theme/pygments/emacs.min.css">
+
+
+
+  <link rel="stylesheet" type="text/css" href="../../theme/font-awesome/css/fontawesome.css">
+  <link rel="stylesheet" type="text/css" href="../../theme/font-awesome/css/brands.css">
+  <link rel="stylesheet" type="text/css" href="../../theme/font-awesome/css/solid.css">
+
+  <link rel="stylesheet" type="text/css" href="../../assets/css/myblog.css">
+
+
+  <!-- Chrome, Firefox OS and Opera -->
+  <meta name="theme-color" content="#369DBE">
+  <!-- Windows Phone -->
+  <meta name="msapplication-navbutton-color" content="#369DBE">
+  <!-- iOS Safari -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- Microsoft EDGE -->
+  <meta name="msapplication-TileColor" content="#369DBE">
+
+  <link href="https://positive-slack.github.io/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="positive slack blog Atom">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-7JN7249338"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  gtag('js', new Date());
+
+  gtag('config', 'G-7JN7249338');
+</script>
+
+
+
+
+
+
+ 
+
+<meta name="author" content="esynr3z" />
+<meta name="description" content="Концепт запуска HDL тестов через Pytest" />
+<meta name="keywords" content="python">
+
+
+  <meta property="og:site_name" content="positive slack blog"/>
+  <meta property="og:title" content="Прокачиваем скрипты симуляции HDL с помощью Python и PyTest"/>
+  <meta property="og:description" content="Концепт запуска HDL тестов через Pytest"/>
+  <meta property="og:locale" content="en_US"/>
+  <meta property="og:url" content="../../blog/2021-01-17-python-hdl-sim/"/>
+  <meta property="og:type" content="article"/>
+  <meta property="article:published_time" content="2021-01-17 10:20:00+03:00"/>
+  <meta property="article:modified_time" content="2024-01-27 11:40:56.662326+03:00"/>
+  <meta property="article:author" content="../../author/esynr3z/">
+  <meta property="article:section" content="Automation"/>
+  <meta property="article:tag" content="python"/>
+  <meta property="og:image" content="kdpv.jpg">
+
+  <title>positive slack blog &ndash; Прокачиваем скрипты симуляции HDL с помощью Python и PyTest</title>
+
+
+</head>
+<body >
+
+<aside>
+  <div>
+    <a href="../../">
+      <img src="/assets/logo.jpg" alt="positive slack blog" title="positive slack blog">
+    </a>
+
+    <h1>
+      <a href="../../">positive slack blog</a>
+    </h1>
+
+    <p>digital design, verification and collaterals</p>
+
+
+
+    <ul class="social">
+      <li>
+        <a class="sc-question"
+           href="/pages/about/"
+           target="_blank">
+          <i class="fa-solid fa-question"></i>
+        </a>
+      </li>
+      <li>
+        <a class="sc-github"
+           href="https://github.com/esynr3z"
+           target="_blank">
+          <i class="fa-brands fa-github"></i>
+        </a>
+      </li>
+      <li>
+        <a class="sc-telegram"
+           href="https://t.me/positiveslack"
+           target="_blank">
+          <i class="fa-brands fa-telegram"></i>
+        </a>
+      </li>
+      <li>
+        <a class="sc-comment"
+           href="https://github.com/positive-slack/positive-slack.github.io/discussions/categories/feedback"
+           target="_blank">
+          <i class="fa-solid fa-comment"></i>
+        </a>
+      </li>
+      <li>
+        <a class="sc-rss"
+           href="/feeds/all.atom.xml"
+           target="_blank">
+          <i class="fa-solid fa-rss"></i>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+</aside>
+  <main>
+
+<nav>
+  <a href="../../">Home</a>
+
+  <a href="/tag/">Tags</a>
+  <a href="/category/">Categories</a>
+  <a href="/archive/">Archives</a>
+</nav>
+
+<article class="single">
+  <header>
+      
+    <h1 id="2021-01-17-python-hdl-sim">Прокачиваем скрипты симуляции HDL с помощью Python и PyTest</h1>
+    <p>
+      Posted on 17 Jan 2021 in <a href="../../category/automation/">Automation</a>
+
+        &#8226; 11 min read
+    </p>
+  </header>
+
+
+  <div>
+    <div class="toc"><span class="toctitle">Table of Contents</span><ul>
+<li><a href="#_1">Задачи</a></li>
+<li><a href="#_2">Идея</a></li>
+<li><a href="#_3">Тестовый проект</a></li>
+<li><a href="#_4">Одиночный запуск</a></li>
+<li><a href="#gui">Одиночный запуск без GUI</a></li>
+<li><a href="#_5">Параметризированный запуск</a></li>
+<li><a href="#-">Запуск с пре-/постпроцессингом</a></li>
+<li><a href="#_6">Массовый запуск</a></li>
+<li><a href="#_7">Массовый параметризированный запуск</a></li>
+<li><a href="#_8">Параллельные запуски</a></li>
+<li><a href="#_9">Поддержка нескольких симуляторов</a></li>
+<li><a href="#ci-github-actions-modelsim-icarus">Поддержка CI. Github Actions + (Modelsim | Icarus)</a></li>
+</ul>
+</div>
+<p><img alt="kdpv" src="../../blog/2021-01-17-python-hdl-sim/kdpv.jpg"></p>
+<p>Все делают это. Ну ладно, не все, но большинство. Пишут скрипты, чтобы симулировать свои проекты на Verilog, SystemVerilog и VHDL.
+Однако, написание и поддержка таких скриптов часто бывает довольно непроста для типично используемых Bash/Makefile/Tcl. Особенно, если необходимо не только открывать GUI для одного тестбенча и смотреть в диаграммы, но и запускать пачки параметризированных тестов для различных блоков, контролировать результат, параллелизировать их выполнение и т.д. Оказалось, что всё это можно закрыть довольно прозрачным и легко поддерживаемым кодом на Python, что мне даже обидно становится от того, как я страдал ранее и сколько странного bash-кода родил.</p>
+<p>Конечно, я не первый кто задумывается о подобном. Уже даже существует целый фреймворк <a href="https://vunit.github.io/">VUnit</a>. Однако, как показывает практика и опросы в профильных чатах, такие фреймворки используются нечасто. Вероятно потому, что они предъявляют требования к внутренней структуре самих тестбенчей, с чем наверное можно мириться только на новых проектах, без обширной кодовой базы. Ну и вообще, куда ж без таких вещей как "у нас так не принято" и "not invented here".</p>
+<p>Собственно, речь пойдет не о написании очередного фреймворка, а просто о замене одних скриптов симуляции на другие, более дружелюбные к расширению и поддержке. Без каких-либо требований к коду, тестбенчам и архитектуре их построения.</p>
+<h2 id="_1">Задачи</h2>
+<p>Попробую перечислить большинство задач, которые так или иначе возникают в процессе разработки и эволюции HDL проекта.
+От более простых к более сложным:</p>
+<ul>
+<li>Одиночный запуск. Запустить симуляцию выбранного тестбенча, посмотреть временные диаграммы, внести коррективы, повторить.</li>
+<li>Одиночный запуск без GUI. То же самое, но без временных диаграмм, оценить результат по выводу в консоль.</li>
+<li>Параметризированный запуск. Запуск симуляции с GUI или без, но с параметрами (дефайнами), передаваемыми в скрипт из консоли.</li>
+<li>Запуск с пре-/постпроцессингом. Например, для теста должны быть подготовлены данные. Или сам тест порождает данные, которые должны быть проверены вне HDL.</li>
+<li>Массовый запуск. Прогнать симуляцию всех существующих тестбенчей.</li>
+<li>Массовый параметризированный запуск. Прогнать симуляцию всех или группы тестбенчей, при этом отдельные тестбенчи могут запускаться несколько раз с разным значением ключевого параметра (размерность шины, интерфейс и т.д).</li>
+<li>Параллельные запуски. Тесты могут легко идти минуты/часы и последовательное исполнение может занимать слишком много времени. Скрипты должны позволять параллельное исполнение нескольких тестбенчей.</li>
+<li>Поддержка нескольких симуляторов. Сделать так, чтобы всё вышеперечисленное работало в разных симуляторах.</li>
+<li>Поддержка CI. Массовый запуск должен сочетаться в том числе с выбранной стратегией CI (прогон всех тестов после каждого пуша, "ночные сборки" и т.д.).</li>
+</ul>
+<p>Ну и дополнительная задача, которая возникает всегда, когда запускается более одного теста за раз - нужен инструмент, который укажет какой тест прошел, какой нет и по какой причине.</p>
+<h2 id="_2">Идея</h2>
+<p>Все симуляторы запускаются примерно одинаково в большинстве случаев:</p>
+<ul>
+<li>собираем список всех исходников (опционально делим на несколько списков по языку);</li>
+<li>собираем список всех директорий для поиска исходников (нужно для include);</li>
+<li>собираем список всех дефайнов;</li>
+<li>сообщаем имя библиотеки, куда всё будем компилировать (или нескольких);</li>
+<li>сообщаем имя верхнего модуля (обычно это имя тестбенча);</li>
+<li>передаём это всё симулятору в виде ключей, файлов со списками и т.д.</li>
+</ul>
+<p>А что если написать модуль на Python, в котором обернуть нужные симуляторы в один класс <code>Simulator</code>, вынести общие вещи в атрибуты и реализовать метод <code>run()</code>, который запустит симуляцию с помощью выбранного симулятора?
+В целом, именно это я и сделал для Icarus Verilog, Modelsim и Vivado Simulator, используя модуль subprocess под капотом.
+Также я добавил класс <code>CliArgs</code>, основанный на модуле <code>argparse</code>, чтобы иметь возможность управлять запуском из консоли.
+Ну и написал некоторое количество вспомогательных функций, которые пригодятся в процессе.
+Получился файл <a href="https://github.com/esynr3z/pyhdlsim/blob/master/sim/sim.py">sim.py</a>.</p>
+<p>Фактически, я постарался свести всё к тому, что в новом проекте нужно всего-лишь закинуть этот файл, создать рядом еще один скрипт на Python, импортировать необходимое из <code>sim.py</code> и начать работу.</p>
+<h2 id="_3">Тестовый проект</h2>
+<p>Для демонстрации я вытянул модуль пошагового вычисления квадратного корня из одного старого проекта, чтобы тестовый дизайн был хоть чуточку сложнее счётчика или сумматора. Код основан на публикации <a href="https://www.researchgate.net/publication/2532597_An_FPGA_Implementation_of_a_Fixed-Point_Square_Root_Operation">An FPGA Implementation of a Fixed-Point Square Root Operation</a>.</p>
+<p><img alt="sqrt algorithm and design" src="../../blog/2021-01-17-python-hdl-sim/sqrt.png"></p>
+<p>Репозиторий проекта <a href="https://github.com/esynr3z/pyhdlsim">pyhdlsim на GitHub</a>.</p>
+<p>Иерархия проекта проста:</p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>tree<span class="w"> </span>-a<span class="w"> </span>-I<span class="w"> </span>.git
+.
+├──<span class="w"> </span>.github
+│<span class="w">   </span>└──<span class="w"> </span>workflows<span class="w"> </span><span class="c1"># Github Actions</span>
+│<span class="w">       </span>├──<span class="w"> </span>icarus-test.yml<span class="w"> </span><span class="c1"># запуск всех тестов в Icarus Verilog после каждого пуша на github</span>
+│<span class="w">       </span>└──<span class="w"> </span>modelsim-test.yml<span class="w"> </span><span class="c1"># запуск всех тестов в Modelsim после каждого пуша на github</span>
+├──<span class="w"> </span>.gitignore
+├──<span class="w"> </span>LICENSE.txt
+├──<span class="w"> </span>README.md
+├──<span class="w"> </span>sim<span class="w"> </span><span class="c1"># скрипты для запуска симуляции</span>
+│<span class="w">   </span>├──<span class="w"> </span>conftest.py
+│<span class="w">   </span>├──<span class="w"> </span>sim.py
+│<span class="w">   </span>└──<span class="w"> </span>test_sqrt.py
+└──<span class="w"> </span>src<span class="w"> </span><span class="c1"># исходники</span>
+<span class="w">    </span>├──<span class="w"> </span>beh<span class="w"> </span><span class="c1"># поведенчесие описания и модели</span>
+<span class="w">    </span>│<span class="w">   </span>└──<span class="w"> </span>sqrt.py
+<span class="w">    </span>├──<span class="w"> </span>rtl<span class="w"> </span><span class="c1"># синтезируемый HDL код</span>
+<span class="w">    </span>│<span class="w">   </span>└──<span class="w"> </span>sqrt.v
+<span class="w">    </span>└──<span class="w"> </span>tb<span class="w"> </span><span class="c1"># HDL код тестбенчей</span>
+<span class="w">        </span>└──<span class="w"> </span>tb_sqrt.sv
+</code></pre></div>
+
+<p>Сам тестбенч <code>tb_sqrt.sv</code> тоже довольно примитивен: подготавливается массив входных значений, вычисляются "идеальные" значения с помощью <code>$sqrt()</code>, входные значения проталкиваются в модуль корня, выходные значения сохраняются в массив, происходит сравнение ожидаемых значений и фактических.</p>
+<p>В принципе, краткое описание есть в самом репозитории и на этом можно закругляться, однако, думаю что будет гораздо нагляднее, если показать весь путь написания тестового окружения (будем считать что весь HDL и файл <code>sim.py</code> уже написаны).
+Всё действо будет происходить внутри папки <code>sim</code>. Осторожно, букв много впереди ожидает.</p>
+<h2 id="_4">Одиночный запуск</h2>
+<p>Создадим файл <code>test_sqrt.py</code> для запуска тестбенча.</p>
+<div class="highlight"><pre><span></span><code><span class="ch">#!/usr/bin/env python3</span>
+
+<span class="kn">from</span> <span class="nn">sim</span> <span class="kn">import</span> <span class="n">Simulator</span>
+
+<span class="n">sim</span> <span class="o">=</span> <span class="n">Simulator</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;icarus&#39;</span><span class="p">,</span> <span class="n">gui</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">cwd</span><span class="o">=</span><span class="s1">&#39;work&#39;</span><span class="p">)</span>
+<span class="n">sim</span><span class="o">.</span><span class="n">incdirs</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;../src/tb&quot;</span><span class="p">,</span> <span class="s2">&quot;../src/rtl&quot;</span><span class="p">,</span> <span class="n">sim</span><span class="o">.</span><span class="n">cwd</span><span class="p">]</span>
+<span class="n">sim</span><span class="o">.</span><span class="n">sources</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;../src/rtl/sqrt.v&quot;</span><span class="p">,</span> <span class="s2">&quot;../src/tb/tb_sqrt.sv&quot;</span><span class="p">]</span>
+<span class="n">sim</span><span class="o">.</span><span class="n">top</span> <span class="o">=</span> <span class="s2">&quot;tb_sqrt&quot;</span>
+<span class="n">sim</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+<span class="n">sim</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</code></pre></div>
+
+<p>Тест будем прогонять в Icarus с открытием GTKWave для просмотра диаграмм. Пути до исходников задаются относительно самого скрипта. Задавать директории поиска инклудов для данного проекта не обязательно, и сделано лишь для демонстрации.
+Чтобы не загрязнять директорию со скриптами - с помощью <code>sim.setup()</code> будет создана рабочая папка <code>work</code> (а если она существовала, то она будет удалена и создана заново) внутри которой симулятор и будет запущен (<code>sim.run()</code>).</p>
+<p>Делаем скрипт исполняемым и запускаем:</p>
+<div class="highlight"><pre><span></span><code>chmod<span class="w"> </span>+x<span class="w"> </span>test_sqrt.py
+./test_sqrt.py
+</code></pre></div>
+
+<p>Симуляция должна пройти успешно и должно появиться окно GTKWave.</p>
+<h2 id="gui">Одиночный запуск без GUI</h2>
+<p>Можно конечно без конца править сам скрипт, но более верным решением будет добавить управление деталями запуска из консоли. Добавляем парсер аргументов <code>CliArgs</code>. Тест вынес в отдельную функцию и добавил стандартную проверку, чтобы парсер запускался только когда мы непосредственно исполняем сам файл.</p>
+<div class="highlight"><pre><span></span><code><span class="ch">#!/usr/bin/env python3</span>
+
+<span class="kn">from</span> <span class="nn">sim</span> <span class="kn">import</span> <span class="n">Simulator</span><span class="p">,</span> <span class="n">CliArgs</span>
+
+<span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">,</span> <span class="n">defines</span><span class="p">,</span> <span class="n">simtool</span><span class="p">,</span> <span class="n">gui</span><span class="p">):</span>
+    <span class="n">sim</span> <span class="o">=</span> <span class="n">Simulator</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">simtool</span><span class="p">,</span> <span class="n">gui</span><span class="o">=</span><span class="n">gui</span><span class="p">,</span> <span class="n">cwd</span><span class="o">=</span><span class="n">tmpdir</span><span class="p">)</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">incdirs</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;../src/tb&quot;</span><span class="p">,</span> <span class="s2">&quot;../src/rtl&quot;</span><span class="p">,</span> <span class="n">sim</span><span class="o">.</span><span class="n">cwd</span><span class="p">]</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">sources</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;../src/rtl/sqrt.v&quot;</span><span class="p">,</span> <span class="s2">&quot;../src/tb/tb_sqrt.sv&quot;</span><span class="p">]</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">defines</span> <span class="o">+=</span> <span class="n">defines</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">top</span> <span class="o">=</span> <span class="s2">&quot;tb_sqrt&quot;</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="c1"># run script with key -h to see help</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">CliArgs</span><span class="p">(</span><span class="n">default_test</span><span class="o">=</span><span class="s2">&quot;test&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">parse</span><span class="p">()</span>
+    <span class="n">test</span><span class="p">(</span><span class="n">tmpdir</span><span class="o">=</span><span class="s1">&#39;work&#39;</span><span class="p">,</span> <span class="n">simtool</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">simtool</span><span class="p">,</span> <span class="n">gui</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">gui</span><span class="p">,</span> <span class="n">defines</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">defines</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Посмотрим что нам доступно:</p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>./test_sqrt.py<span class="w"> </span>-h
+usage:<span class="w"> </span>test_sqrt.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>-t<span class="w"> </span>&lt;name&gt;<span class="o">]</span><span class="w"> </span><span class="o">[</span>-s<span class="w"> </span>&lt;name&gt;<span class="o">]</span><span class="w"> </span><span class="o">[</span>-b<span class="o">]</span><span class="w"> </span><span class="o">[</span>-d<span class="w"> </span>&lt;def&gt;<span class="w"> </span><span class="o">[</span>&lt;def&gt;<span class="w"> </span>...<span class="o">]]</span>
+
+optional<span class="w"> </span>arguments:
+<span class="w">  </span>-h,<span class="w"> </span>--help<span class="w">            </span>show<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span>
+<span class="w">  </span>-t<span class="w"> </span>&lt;name&gt;<span class="w">             </span><span class="nb">test</span><span class="w"> </span>&lt;name&gt;<span class="p">;</span><span class="w"> </span>default<span class="w"> </span>is<span class="w"> </span><span class="s1">&#39;test&#39;</span>
+<span class="w">  </span>-s<span class="w"> </span>&lt;name&gt;<span class="w">             </span>simulation<span class="w"> </span>tool<span class="w"> </span>&lt;name&gt;<span class="p">;</span><span class="w"> </span>default<span class="w"> </span>is<span class="w"> </span><span class="s1">&#39;icarus&#39;</span>
+<span class="w">  </span>-b<span class="w">                    </span><span class="nb">enable</span><span class="w"> </span>batch<span class="w"> </span>mode<span class="w"> </span><span class="o">(</span>no<span class="w"> </span>GUI<span class="o">)</span>
+<span class="w">  </span>-d<span class="w"> </span>&lt;def&gt;<span class="w"> </span><span class="o">[</span>&lt;def&gt;<span class="w"> </span>...<span class="o">]</span><span class="w">  </span>define<span class="w"> </span>&lt;name&gt;<span class="p">;</span><span class="w"> </span>option<span class="w"> </span>can<span class="w"> </span>be<span class="w"> </span>used<span class="w"> </span>multiple<span class="w"> </span><span class="nb">times</span>
+</code></pre></div>
+
+<p>Теперь мы можем запустить тест в консольном режиме:</p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>./test_sqrt.py<span class="w"> </span>-b
+Run<span class="w"> </span>Icarus<span class="w"> </span><span class="o">(</span><span class="nv">cwd</span><span class="o">=</span>/space/projects/pyhdlsim/simtmp/work<span class="o">)</span>
+<span class="nv">TOP_NAME</span><span class="o">=</span>tb_sqrt<span class="w"> </span>SIM
+iverilog<span class="w"> </span>-I<span class="w"> </span>/space/projects/pyhdlsim/src/tb<span class="w"> </span>-I<span class="w"> </span>/space/projects/pyhdlsim/src/rtl<span class="w"> </span>-I<span class="w"> </span>/space/projects/pyhdlsim/simtmp/work<span class="w"> </span>-D<span class="w"> </span><span class="nv">TOP_NAME</span><span class="o">=</span>tb_sqrt<span class="w"> </span>-D<span class="w"> </span>SIM<span class="w"> </span>-g2005-sv<span class="w"> </span>-s<span class="w"> </span>tb_sqrt<span class="w"> </span>-o<span class="w"> </span>worklib.vvp<span class="w"> </span>/space/projects/pyhdlsim/src/rtl/sqrt.v<span class="w"> </span>/space/projects/pyhdlsim/src/tb/tb_sqrt.sv
+
+vvp<span class="w"> </span>worklib.vvp<span class="w"> </span>-lxt2
+LXT2<span class="w"> </span>info:<span class="w"> </span>dumpfile<span class="w"> </span>dump.vcd<span class="w"> </span>opened<span class="w"> </span><span class="k">for</span><span class="w"> </span>output.
+Test<span class="w"> </span>started.<span class="w"> </span>Will<span class="w"> </span>push<span class="w"> </span><span class="m">8</span><span class="w"> </span>words<span class="w"> </span>to<span class="w"> </span>DUT.
+!@#<span class="w"> </span>TEST<span class="w"> </span>PASSED<span class="w"> </span><span class="c1">#@!</span>
+</code></pre></div>
+
+<p>Или запустить в другом симуляторе:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># как в консоли</span>
+./test_sqrt.py<span class="w"> </span>-s<span class="w"> </span>modelsim<span class="w"> </span>-b
+<span class="c1"># так и с GUI</span>
+./test_sqrt.py<span class="w"> </span>-s<span class="w"> </span>modelsim
+</code></pre></div>
+
+<h2 id="_5">Параметризированный запуск</h2>
+<p>Также теперь можно контролировать дефайны из консоли, и, например, увеличить количество подаваемых данных:</p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>./test_sqrt.py<span class="w"> </span>-b<span class="w"> </span>-d<span class="w"> </span><span class="nv">ITER_N</span><span class="o">=</span><span class="m">42</span>
+Run<span class="w"> </span>Icarus<span class="w"> </span><span class="o">(</span><span class="nv">cwd</span><span class="o">=</span>/space/projects/pyhdlsim/simtmp/work<span class="o">)</span>
+<span class="nv">TOP_NAME</span><span class="o">=</span>tb_sqrt<span class="w"> </span>SIM
+iverilog<span class="w"> </span>-I<span class="w"> </span>/space/projects/pyhdlsim/src/tb<span class="w"> </span>-I<span class="w"> </span>/space/projects/pyhdlsim/src/rtl<span class="w"> </span>-I<span class="w"> </span>/space/projects/pyhdlsim/simtmp/work<span class="w"> </span>-D<span class="w"> </span><span class="nv">TOP_NAME</span><span class="o">=</span>tb_sqrt<span class="w"> </span>-D<span class="w"> </span>SIM<span class="w"> </span>-g2005-sv<span class="w"> </span>-s<span class="w"> </span>tb_sqrt<span class="w"> </span>-o<span class="w"> </span>worklib.vvp<span class="w"> </span>/space/projects/pyhdlsim/src/rtl/sqrt.v<span class="w"> </span>/space/projects/pyhdlsim/src/tb/tb_sqrt.sv
+
+vvp<span class="w"> </span>worklib.vvp<span class="w"> </span>-lxt2
+LXT2<span class="w"> </span>info:<span class="w"> </span>dumpfile<span class="w"> </span>dump.vcd<span class="w"> </span>opened<span class="w"> </span><span class="k">for</span><span class="w"> </span>output.
+Test<span class="w"> </span>started.<span class="w"> </span>Will<span class="w"> </span>push<span class="w"> </span><span class="m">42</span><span class="w"> </span>words<span class="w"> </span>to<span class="w"> </span>DUT.
+!@#<span class="w"> </span>TEST<span class="w"> </span>PASSED<span class="w"> </span><span class="c1">#@!</span>
+</code></pre></div>
+
+<h2 id="-">Запуск с пре-/постпроцессингом</h2>
+<p>Часто бывает так, что сгенерировать данные для теста невозможно внутри тестбенча и должны быть применены внешние генераторы.
+Сделаем еще один тест, где будем сверять работу модуля на Verilog с идеальной моделью, написанной на Python.
+Алгоритм работы уже был представлен выше - просто перепишем его на Python, не забывая проверить что он на самом деле работает.
+Результатом будет файл <code>src/beh/sqrt.py</code>. Оттуда нам нужна будет лишь одна функция <code>nrsqrt()</code>.</p>
+<p>Переименуем старый тест, который ориентируется на данные, полученные внутри тестбенча, в <code>test_sv</code>. И создадим новый <code>test_py</code>, который будет готовить данные с помощью функции <code>nrsqrt()</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="ch">#!/usr/bin/env python3</span>
+
+<span class="kn">from</span> <span class="nn">sim</span> <span class="kn">import</span> <span class="n">Simulator</span><span class="p">,</span> <span class="n">CliArgs</span><span class="p">,</span> <span class="n">path_join</span><span class="p">,</span> <span class="n">write_memfile</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;../src/beh&#39;</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">sqrt</span> <span class="kn">import</span> <span class="n">nrsqrt</span>
+
+<span class="k">def</span> <span class="nf">create_sim</span><span class="p">(</span><span class="n">cwd</span><span class="p">,</span> <span class="n">simtool</span><span class="p">,</span> <span class="n">gui</span><span class="p">,</span> <span class="n">defines</span><span class="p">):</span>
+    <span class="n">sim</span> <span class="o">=</span> <span class="n">Simulator</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">simtool</span><span class="p">,</span> <span class="n">gui</span><span class="o">=</span><span class="n">gui</span><span class="p">,</span> <span class="n">cwd</span><span class="o">=</span><span class="n">cwd</span><span class="p">)</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">incdirs</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;../src/tb&quot;</span><span class="p">,</span> <span class="s2">&quot;../src/rtl&quot;</span><span class="p">,</span> <span class="n">cwd</span><span class="p">]</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">sources</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;../src/rtl/sqrt.v&quot;</span><span class="p">,</span> <span class="s2">&quot;../src/tb/tb_sqrt.sv&quot;</span><span class="p">]</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">defines</span> <span class="o">+=</span> <span class="n">defines</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">top</span> <span class="o">=</span> <span class="s2">&quot;tb_sqrt&quot;</span>
+    <span class="k">return</span> <span class="n">sim</span>
+
+<span class="k">def</span> <span class="nf">test_sv</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">,</span> <span class="n">defines</span><span class="p">,</span> <span class="n">simtool</span><span class="p">,</span> <span class="n">gui</span><span class="p">):</span>
+    <span class="n">sim</span> <span class="o">=</span> <span class="n">create_sim</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">,</span> <span class="n">simtool</span><span class="p">,</span> <span class="n">gui</span><span class="p">,</span> <span class="n">defines</span><span class="p">)</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">test_py</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">,</span> <span class="n">defines</span><span class="p">,</span> <span class="n">simtool</span><span class="p">,</span> <span class="n">gui</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">pytest_run</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="c1"># prepare simulator</span>
+    <span class="n">sim</span> <span class="o">=</span> <span class="n">create_sim</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">,</span> <span class="n">simtool</span><span class="p">,</span> <span class="n">gui</span><span class="p">,</span> <span class="n">defines</span><span class="p">)</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+    <span class="c1"># prepare model data</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">din_width</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sim</span><span class="o">.</span><span class="n">get_define</span><span class="p">(</span><span class="s1">&#39;DIN_W&#39;</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+        <span class="n">din_width</span> <span class="o">=</span> <span class="mi">32</span>
+    <span class="n">iterations</span> <span class="o">=</span> <span class="mi">100</span>
+    <span class="n">stimuli</span> <span class="o">=</span> <span class="p">[</span><span class="n">random</span><span class="o">.</span><span class="n">randrange</span><span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="n">din_width</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">iterations</span><span class="p">)]</span>
+    <span class="n">golden</span> <span class="o">=</span> <span class="p">[</span><span class="n">nrsqrt</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">din_width</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">stimuli</span><span class="p">]</span>
+    <span class="n">write_memfile</span><span class="p">(</span><span class="n">path_join</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">,</span> <span class="s1">&#39;stimuli.mem&#39;</span><span class="p">),</span> <span class="n">stimuli</span><span class="p">)</span>
+    <span class="n">write_memfile</span><span class="p">(</span><span class="n">path_join</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">,</span> <span class="s1">&#39;golden.mem&#39;</span><span class="p">),</span> <span class="n">golden</span><span class="p">)</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">defines</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;ITER_N=</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">iterations</span><span class="p">]</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">defines</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;PYMODEL&#39;</span><span class="p">,</span> <span class="s1">&#39;PYMODEL_STIMULI=&quot;stimuli.mem&quot;&#39;</span><span class="p">,</span> <span class="s1">&#39;PYMODEL_GOLDEN=&quot;golden.mem&quot;&#39;</span><span class="p">]</span>
+    <span class="c1"># run simulation</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">CliArgs</span><span class="p">(</span><span class="n">default_test</span><span class="o">=</span><span class="s2">&quot;test_sv&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">parse</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="nb">globals</span><span class="p">()[</span><span class="n">args</span><span class="o">.</span><span class="n">test</span><span class="p">](</span><span class="n">tmpdir</span><span class="o">=</span><span class="s1">&#39;work&#39;</span><span class="p">,</span> <span class="n">simtool</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">simtool</span><span class="p">,</span> <span class="n">gui</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">gui</span><span class="p">,</span> <span class="n">defines</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">defines</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;There is no test with name &#39;</span><span class="si">%s</span><span class="s2">&#39;!&quot;</span> <span class="o">%</span> <span class="n">args</span><span class="o">.</span><span class="n">test</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Теперь, когда тестов несколько, можно воспользоваться ключом выбора теста:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># аргумент должен совпадать с именем функции</span>
+./test_sqrt.py<span class="w"> </span>-t<span class="w"> </span>test_py
+</code></pre></div>
+
+<p>Аналогичным образом можно организовать и постпроцессинг внутри запускающего скрипта при желании.</p>
+<h2 id="_6">Массовый запуск</h2>
+<p>Сейчас у нас уже есть 2 теста, а ведь завтра может быть и 202, а значит уже можно переживать о том, что нужен способ как их все прогнать за раз. И вот тут на сцене появляется pytest.</p>
+<p>Нано-ликбез по pytest.</p>
+<ul>
+<li>Начиная с директории запуска, pytest рекурсивно ищёт всё начинающееся на test* и исполняет: модули, функции, классы, методы.</li>
+<li>Тест считается выполненным, если не возникло исключений (типичным является использование <code>assert</code> для контроля).</li>
+<li>Для формирования тестового окружения используются фикстуры (fixtures). Например, что подставлять в тест <code>test_a(a)</code> в качестве аргумента при выполнении как раз определяется фикстурой.</li>
+<li>Можно создать дополнительный файл <code>conftest.py</code>, в котором разместить код для более тонкого контроля выполнения тестов и их окружения.</li>
+</ul>
+<p>Типичные сценарии запуска:</p>
+<ul>
+<li><code>pytest</code> - рекурсивный поиск и исполнение всех тестов, начиная с текущей директории;</li>
+<li><code>pytest -v</code> - выполнить тесты и показать болеe подробную информацию о ходе выполнении тестов;</li>
+<li><code>pytest -rP</code> - выполнить тесты и показать вывод в stdout тех тестов, что завершились успешно;</li>
+<li><code>pytest test_sqrt.py::test_sv</code> - выполнить указанный тест.</li>
+</ul>
+<p>Для того чтобы адаптировать текущий скрипт под pytest нужно совсем немного. Импортируем сам pytest. Добавим пару фикстур для таких аргументов теста как <code>simtool</code> и <code>defines</code>. Значение, возвращаемое фикстурами будет использовано в качестве аргумента во всех тестах. Два других аргумента <code>gui</code> и <code>pytest_run</code> снабжаем значениями по умолчанию. Фактически их тоже можно было сделать фикстурами, но т.к. для запуска pytest они не должны принимать никакое другое значение, то сделал так.</p>
+<p>Да, кстати, появился аргумент <code>pytest_run</code> который сообщает о том, выполняется ли сейчас pytest, или просто тест запущен отдельно из консоли.</p>
+<p>С аргументом <code>tmpdir</code>  я схитрил - это имя стандартной фикстуры, которая возвращает путь к временной папке, уникальной для каждого теста. Т.е. сами тесты будут прогонятся где-то во временных директориях и не засорять содержимое <code>sim</code>.</p>
+<p>Имена тестов тоже изменять не нужно - они будут найдены pytest, т.к. имеют префикс test_.</p>
+<p>Решение о том, прошел тест или нет принимается по состоянию аттрибута <code>is_passed</code> симулятора. Он возвращает истину, если увидел ключевую фразу <code>!@# TEST PASSED #@!</code> в stdout. Очевидно, если компиляция была неудачной, или тест завершился с ошибкой, то этой фразы выведено не будет. Это самый простой способ оценить результат, но возможности для его кастомизации здесь ограничены лишь фантазией.
+Можно получить stdout через <code>sim.stdout</code> и искать там что угодно.</p>
+<div class="highlight"><pre><span></span><code><span class="ch">#!/usr/bin/env python3</span>
+
+<span class="kn">import</span> <span class="nn">pytest</span>
+<span class="kn">from</span> <span class="nn">sim</span> <span class="kn">import</span> <span class="n">Simulator</span><span class="p">,</span> <span class="n">CliArgs</span><span class="p">,</span> <span class="n">path_join</span><span class="p">,</span> <span class="n">write_memfile</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;../src/beh&#39;</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">sqrt</span> <span class="kn">import</span> <span class="n">nrsqrt</span>
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">defines</span><span class="p">():</span>
+    <span class="k">return</span> <span class="p">[]</span>
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span> <span class="nf">simtool</span><span class="p">():</span>
+    <span class="k">return</span> <span class="s1">&#39;icarus&#39;</span>
+
+<span class="k">def</span> <span class="nf">create_sim</span><span class="p">(</span><span class="n">cwd</span><span class="p">,</span> <span class="n">simtool</span><span class="p">,</span> <span class="n">gui</span><span class="p">,</span> <span class="n">defines</span><span class="p">):</span>
+    <span class="n">sim</span> <span class="o">=</span> <span class="n">Simulator</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">simtool</span><span class="p">,</span> <span class="n">gui</span><span class="o">=</span><span class="n">gui</span><span class="p">,</span> <span class="n">cwd</span><span class="o">=</span><span class="n">cwd</span><span class="p">,</span> <span class="n">passed_marker</span><span class="o">=</span><span class="s1">&#39;!@# TEST PASSED #@!&#39;</span><span class="p">)</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">incdirs</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;../src/tb&quot;</span><span class="p">,</span> <span class="s2">&quot;../src/rtl&quot;</span><span class="p">,</span> <span class="n">cwd</span><span class="p">]</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">sources</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;../src/rtl/sqrt.v&quot;</span><span class="p">,</span> <span class="s2">&quot;../src/tb/tb_sqrt.sv&quot;</span><span class="p">]</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">defines</span> <span class="o">+=</span> <span class="n">defines</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">top</span> <span class="o">=</span> <span class="s2">&quot;tb_sqrt&quot;</span>
+    <span class="k">return</span> <span class="n">sim</span>
+
+<span class="k">def</span> <span class="nf">test_sv</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">,</span> <span class="n">defines</span><span class="p">,</span> <span class="n">simtool</span><span class="p">,</span> <span class="n">gui</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">pytest_run</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="n">sim</span> <span class="o">=</span> <span class="n">create_sim</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">,</span> <span class="n">simtool</span><span class="p">,</span> <span class="n">gui</span><span class="p">,</span> <span class="n">defines</span><span class="p">)</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">pytest_run</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">sim</span><span class="o">.</span><span class="n">is_passed</span>
+
+<span class="k">def</span> <span class="nf">test_py</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">,</span> <span class="n">defines</span><span class="p">,</span> <span class="n">simtool</span><span class="p">,</span> <span class="n">gui</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">pytest_run</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="c1"># prepare simulator</span>
+    <span class="n">sim</span> <span class="o">=</span> <span class="n">create_sim</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">,</span> <span class="n">simtool</span><span class="p">,</span> <span class="n">gui</span><span class="p">,</span> <span class="n">defines</span><span class="p">)</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+    <span class="c1"># prepare model data</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">din_width</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sim</span><span class="o">.</span><span class="n">get_define</span><span class="p">(</span><span class="s1">&#39;DIN_W&#39;</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+        <span class="n">din_width</span> <span class="o">=</span> <span class="mi">32</span>
+    <span class="n">iterations</span> <span class="o">=</span> <span class="mi">100</span>
+    <span class="n">stimuli</span> <span class="o">=</span> <span class="p">[</span><span class="n">random</span><span class="o">.</span><span class="n">randrange</span><span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="n">din_width</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">iterations</span><span class="p">)]</span>
+    <span class="n">golden</span> <span class="o">=</span> <span class="p">[</span><span class="n">nrsqrt</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">din_width</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">stimuli</span><span class="p">]</span>
+    <span class="n">write_memfile</span><span class="p">(</span><span class="n">path_join</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">,</span> <span class="s1">&#39;stimuli.mem&#39;</span><span class="p">),</span> <span class="n">stimuli</span><span class="p">)</span>
+    <span class="n">write_memfile</span><span class="p">(</span><span class="n">path_join</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">,</span> <span class="s1">&#39;golden.mem&#39;</span><span class="p">),</span> <span class="n">golden</span><span class="p">)</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">defines</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;ITER_N=</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">iterations</span><span class="p">]</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">defines</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;PYMODEL&#39;</span><span class="p">,</span> <span class="s1">&#39;PYMODEL_STIMULI=&quot;stimuli.mem&quot;&#39;</span><span class="p">,</span> <span class="s1">&#39;PYMODEL_GOLDEN=&quot;golden.mem&quot;&#39;</span><span class="p">]</span>
+    <span class="c1"># run simulation</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">pytest_run</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">sim</span><span class="o">.</span><span class="n">is_passed</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">CliArgs</span><span class="p">(</span><span class="n">default_test</span><span class="o">=</span><span class="s2">&quot;test_sv&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">parse</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="nb">globals</span><span class="p">()[</span><span class="n">args</span><span class="o">.</span><span class="n">test</span><span class="p">](</span><span class="n">tmpdir</span><span class="o">=</span><span class="s1">&#39;work&#39;</span><span class="p">,</span> <span class="n">simtool</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">simtool</span><span class="p">,</span> <span class="n">gui</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">gui</span><span class="p">,</span> <span class="n">defines</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">defines</span><span class="p">,</span> <span class="n">pytest_run</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;There is no test with name &#39;</span><span class="si">%s</span><span class="s2">&#39;!&quot;</span> <span class="o">%</span> <span class="n">args</span><span class="o">.</span><span class="n">test</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Прогоним все тесты несколько раз:</p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span><span class="nv">pytest</span>
+<span class="o">==========</span><span class="w"> </span><span class="nb">test</span><span class="w"> </span>session<span class="w"> </span><span class="nv">starts</span><span class="w"> </span><span class="o">===========</span>
+platform<span class="w"> </span>linux<span class="w"> </span>--<span class="w"> </span>Python<span class="w"> </span><span class="m">3</span>.8.5,<span class="w"> </span>pytest-6.2.1,<span class="w"> </span>py-1.10.0,<span class="w"> </span>pluggy-0.13.1
+rootdir:<span class="w"> </span>/space/projects/misc/habr-publications/pyhdlsim/pyhdlsim/simtmp
+plugins:<span class="w"> </span>xdist-2.2.0,<span class="w"> </span>forked-1.3.0
+collected<span class="w"> </span><span class="m">2</span><span class="w"> </span>items
+
+test_sqrt.py<span class="w"> </span>..<span class="w">                    </span><span class="o">[</span><span class="m">100</span>%<span class="o">]</span>
+
+<span class="o">===========</span><span class="w"> </span><span class="m">2</span><span class="w"> </span>passed<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="m">0</span>.08s<span class="w"> </span><span class="o">============</span>
+
+$<span class="w"> </span>pytest<span class="w"> </span>-v
+<span class="o">==========</span><span class="w"> </span><span class="nb">test</span><span class="w"> </span>session<span class="w"> </span><span class="nv">starts</span><span class="w"> </span><span class="o">===========</span>
+platform<span class="w"> </span>linux<span class="w"> </span>--<span class="w"> </span>Python<span class="w"> </span><span class="m">3</span>.8.5,<span class="w"> </span>pytest-6.2.1,<span class="w"> </span>py-1.10.0,<span class="w"> </span>pluggy-0.13.1<span class="w"> </span>--<span class="w"> </span>/usr/bin/python3
+cachedir:<span class="w"> </span>.pytest_cache
+rootdir:<span class="w"> </span>/space/projects/misc/habr-publications/pyhdlsim/pyhdlsim/simtmp
+plugins:<span class="w"> </span>xdist-2.2.0,<span class="w"> </span>forked-1.3.0
+collected<span class="w"> </span><span class="m">2</span><span class="w"> </span>items
+
+test_sqrt.py::test_sv<span class="w"> </span>PASSED<span class="w">       </span><span class="o">[</span><span class="w"> </span><span class="m">50</span>%<span class="o">]</span>
+test_sqrt.py::test_py<span class="w"> </span>PASSED<span class="w">       </span><span class="o">[</span><span class="m">100</span>%<span class="o">]</span>
+
+<span class="o">===========</span><span class="w"> </span><span class="m">2</span><span class="w"> </span>passed<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="m">0</span>.08s<span class="w"> </span><span class="o">============</span>
+</code></pre></div>
+
+<h2 id="_7">Массовый параметризированный запуск</h2>
+<p>Неплохо было бы прогнать тесты для разной величины ширины данных. Очевидно, что руками запускать тесты N раз, каждый раз анализируя глазами логи в поисках фразы об успешном завершении, довольно утомительно. Нужно использовать pytest.</p>
+<p>Модификация будет минимальной, нужно лишь обновить фикстуру <code>defines</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># заменим это</span>
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">defines</span><span class="p">():</span>
+    <span class="k">return</span> <span class="p">[]</span>
+<span class="c1"># на это</span>
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">(</span><span class="n">params</span><span class="o">=</span><span class="p">[[],</span> <span class="p">[</span><span class="s1">&#39;DIN_W=16&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;DIN_W=18&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;DIN_W=25&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;DIN_W=32&#39;</span><span class="p">]])</span>
+<span class="k">def</span> <span class="nf">defines</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">request</span><span class="o">.</span><span class="n">param</span>
+</code></pre></div>
+
+<p>Теперь фикстура может принимать одно из 5 значений. Запустим тесты:</p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span>pytest<span class="w"> </span>-v
+<span class="o">==================</span><span class="w"> </span><span class="nb">test</span><span class="w"> </span>session<span class="w"> </span><span class="nv">starts</span><span class="w"> </span><span class="o">==================</span>
+platform<span class="w"> </span>linux<span class="w"> </span>--<span class="w"> </span>Python<span class="w"> </span><span class="m">3</span>.8.5,<span class="w"> </span>pytest-6.2.1,<span class="w"> </span>py-1.10.0,<span class="w"> </span>pluggy-0.13.1<span class="w"> </span>--<span class="w"> </span>/usr/bin/python3
+cachedir:<span class="w"> </span>.pytest_cache
+rootdir:<span class="w"> </span>/space/projects/misc/habr-publications/pyhdlsim/pyhdlsim/simtmp
+plugins:<span class="w"> </span>xdist-2.2.0,<span class="w"> </span>forked-1.3.0
+collected<span class="w"> </span><span class="m">10</span><span class="w"> </span>items
+
+test_sqrt.py::test_sv<span class="o">[</span>defines0<span class="o">]</span><span class="w"> </span>PASSED<span class="w">            </span><span class="o">[</span><span class="w"> </span><span class="m">10</span>%<span class="o">]</span>
+test_sqrt.py::test_sv<span class="o">[</span>defines1<span class="o">]</span><span class="w"> </span>PASSED<span class="w">            </span><span class="o">[</span><span class="w"> </span><span class="m">20</span>%<span class="o">]</span>
+test_sqrt.py::test_sv<span class="o">[</span>defines2<span class="o">]</span><span class="w"> </span>PASSED<span class="w">            </span><span class="o">[</span><span class="w"> </span><span class="m">30</span>%<span class="o">]</span>
+test_sqrt.py::test_sv<span class="o">[</span>defines3<span class="o">]</span><span class="w"> </span>PASSED<span class="w">            </span><span class="o">[</span><span class="w"> </span><span class="m">40</span>%<span class="o">]</span>
+test_sqrt.py::test_sv<span class="o">[</span>defines4<span class="o">]</span><span class="w"> </span>PASSED<span class="w">            </span><span class="o">[</span><span class="w"> </span><span class="m">50</span>%<span class="o">]</span>
+test_sqrt.py::test_py<span class="o">[</span>defines0<span class="o">]</span><span class="w"> </span>PASSED<span class="w">            </span><span class="o">[</span><span class="w"> </span><span class="m">60</span>%<span class="o">]</span>
+test_sqrt.py::test_py<span class="o">[</span>defines1<span class="o">]</span><span class="w"> </span>PASSED<span class="w">            </span><span class="o">[</span><span class="w"> </span><span class="m">70</span>%<span class="o">]</span>
+test_sqrt.py::test_py<span class="o">[</span>defines2<span class="o">]</span><span class="w"> </span>PASSED<span class="w">            </span><span class="o">[</span><span class="w"> </span><span class="m">80</span>%<span class="o">]</span>
+test_sqrt.py::test_py<span class="o">[</span>defines3<span class="o">]</span><span class="w"> </span>PASSED<span class="w">            </span><span class="o">[</span><span class="w"> </span><span class="m">90</span>%<span class="o">]</span>
+test_sqrt.py::test_py<span class="o">[</span>defines4<span class="o">]</span><span class="w"> </span>PASSED<span class="w">            </span><span class="o">[</span><span class="m">100</span>%<span class="o">]</span>
+
+<span class="o">==================</span><span class="w"> </span><span class="m">10</span><span class="w"> </span>passed<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="m">0</span>.28s<span class="w"> </span><span class="o">===================</span>
+</code></pre></div>
+
+<p>Как видим, теперь каждый тест запустился по 5 раз с разным дефайном.</p>
+<h2 id="_8">Параллельные запуски</h2>
+<p>Тут тоже всё довольно просто и работает почти из коробки. Ставим один плагин:</p>
+<div class="highlight"><pre><span></span><code>python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>pytest-xdist
+</code></pre></div>
+
+<p>И теперь можем запускать тесты в несколько параллельных потоков, например, в 4:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># можно также использовать значение auto, pytest задействует все доступные ядра</span>
+pytest<span class="w"> </span>-n<span class="w"> </span><span class="m">4</span>
+</code></pre></div>
+
+<p>Для того, чтобы проверить работу этого механизма добавим еще один длительный тест:</p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">test_slow</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">,</span> <span class="n">defines</span><span class="p">,</span> <span class="n">simtool</span><span class="p">,</span> <span class="n">gui</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">pytest_run</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="n">sim</span> <span class="o">=</span> <span class="n">create_sim</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">,</span> <span class="n">simtool</span><span class="p">,</span> <span class="n">gui</span><span class="p">,</span> <span class="n">defines</span><span class="p">)</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">defines</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;ITER_N=500000&#39;</span><span class="p">]</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+    <span class="n">sim</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">pytest_run</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">sim</span><span class="o">.</span><span class="n">is_passed</span>
+</code></pre></div>
+
+<p>Запустим последовательное и параллельное исполнение (тестов теперь стало 3*5=15):</p>
+<div class="highlight"><pre><span></span><code>$<span class="w"> </span><span class="nv">pytest</span>
+<span class="o">===================</span><span class="w"> </span><span class="nb">test</span><span class="w"> </span>session<span class="w"> </span><span class="nv">starts</span><span class="w"> </span><span class="o">====================</span>
+platform<span class="w"> </span>linux<span class="w"> </span>--<span class="w"> </span>Python<span class="w"> </span><span class="m">3</span>.8.5,<span class="w"> </span>pytest-6.2.1,<span class="w"> </span>py-1.10.0,<span class="w"> </span>pluggy-0.13.1
+rootdir:<span class="w"> </span>/space/projects/misc/habr-publications/pyhdlsim/pyhdlsim/simtmp
+plugins:<span class="w"> </span>xdist-2.2.0,<span class="w"> </span>forked-1.3.0
+collected<span class="w"> </span><span class="m">15</span><span class="w"> </span>items
+
+test_sqrt.py<span class="w"> </span>...............<span class="w">                         </span><span class="o">[</span><span class="m">100</span>%<span class="o">]</span>
+
+<span class="o">==============</span><span class="w"> </span><span class="m">15</span><span class="w"> </span>passed<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="m">242</span>.74s<span class="w"> </span><span class="o">(</span><span class="m">0</span>:04:02<span class="o">)</span><span class="w"> </span><span class="o">==============</span>
+
+$<span class="w"> </span>pytest<span class="w"> </span>-n<span class="w"> </span><span class="nv">auto</span>
+<span class="o">===================</span><span class="w"> </span><span class="nb">test</span><span class="w"> </span>session<span class="w"> </span><span class="nv">starts</span><span class="w"> </span><span class="o">====================</span>
+platform<span class="w"> </span>linux<span class="w"> </span>--<span class="w"> </span>Python<span class="w"> </span><span class="m">3</span>.8.5,<span class="w"> </span>pytest-6.2.1,<span class="w"> </span>py-1.10.0,<span class="w"> </span>pluggy-0.13.1
+rootdir:<span class="w"> </span>/space/projects/misc/habr-publications/pyhdlsim/pyhdlsim/simtmp
+plugins:<span class="w"> </span>xdist-2.2.0,<span class="w"> </span>forked-1.3.0
+gw0<span class="w"> </span><span class="o">[</span><span class="m">15</span><span class="o">]</span><span class="w"> </span>/<span class="w"> </span>gw1<span class="w"> </span><span class="o">[</span><span class="m">15</span><span class="o">]</span><span class="w"> </span>/<span class="w"> </span>gw2<span class="w"> </span><span class="o">[</span><span class="m">15</span><span class="o">]</span><span class="w"> </span>/<span class="w"> </span>gw3<span class="w"> </span><span class="o">[</span><span class="m">15</span><span class="o">]</span>
+...............<span class="w">                                      </span><span class="o">[</span><span class="m">100</span>%<span class="o">]</span>
+<span class="o">==============</span><span class="w"> </span><span class="m">15</span><span class="w"> </span>passed<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="m">145</span>.66s<span class="w"> </span><span class="o">(</span><span class="m">0</span>:02:25<span class="o">)</span><span class="w"> </span><span class="o">==============</span>
+</code></pre></div>
+
+<p>Результат, как говорится, видно невооруженным взглядом.</p>
+<h2 id="_9">Поддержка нескольких симуляторов</h2>
+<p>Ранее уже было показано, что при выполнении теста без pytest можно было выбрать симулятор с помощью ключа <code>-s</code>.
+Теперь же добавим выбор симулятора для pytest. Очевидно, нужно что-то сделать с фикстурой <code>simtool</code>.</p>
+<p>Тут нам пригодится знание о существовании файла <code>conftest.py</code>, необходимого для кастомизации запусков pytest. Создадим такой файл рядом с <code>sim.py</code> и добавим туда следующий код:</p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">pytest_addoption</span><span class="p">(</span><span class="n">parser</span><span class="p">):</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">addoption</span><span class="p">(</span><span class="s2">&quot;--sim&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;icarus&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<p>В файле теста <code>test_sqrt.py</code> обновим фикстуру <code>simtool</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span> <span class="nf">simtool</span><span class="p">(</span><span class="n">pytestconfig</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">pytestconfig</span><span class="o">.</span><span class="n">getoption</span><span class="p">(</span><span class="s2">&quot;sim&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Теперь можно прогнать все тесты в другом симуляторе:</p>
+<div class="highlight"><pre><span></span><code>pytest<span class="w"> </span>--sim<span class="w"> </span>modelsim<span class="w"> </span>-n<span class="w"> </span>auto
+</code></pre></div>
+
+<h2 id="ci-github-actions-modelsim-icarus">Поддержка CI. Github Actions + (Modelsim | Icarus)</h2>
+<p>Ну и бонусом будет часть о непрерывной интеграции (CI). В репозиторий добавлены два файла <code>.github/workflows/icarus-test.yml</code> и <code>.github/workflows/modelsim-test.yml</code>. Это так называемые Github Actions - по определенному событию будет выполнено их содержимое внутри виртуального окружения, предоставляемого Github. В данном случае, после каждого пуша будут прогнаны все тесты в двух симуляторах.</p>
+<p>В Icarus Verilog:</p>
+<div class="highlight"><pre><span></span><code>- name: Install dependencies
+  run: |
+    python -m pip install --upgrade pip
+    pip install pytest pytest-xdist
+    sudo apt-get install iverilog
+- name: Test code
+  working-directory: ./sim
+  run: |
+    pytest -n auto
+</code></pre></div>
+
+<p>И в Modelsim Intel Starter Pack:</p>
+<div class="highlight"><pre><span></span><code><span class="o">-</span><span class="w"> </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="n">Install</span><span class="w"> </span><span class="n">dependencies</span>
+<span class="w">  </span><span class="n">run</span><span class="p">:</span><span class="w"> </span><span class="o">|</span>
+<span class="w">    </span><span class="n">python</span><span class="w"> </span><span class="o">-</span><span class="n">m</span><span class="w"> </span><span class="n">pip</span><span class="w"> </span><span class="n">install</span><span class="w"> </span><span class="o">--</span><span class="n">upgrade</span><span class="w"> </span><span class="n">pip</span>
+<span class="w">      </span><span class="n">pip</span><span class="w"> </span><span class="n">install</span><span class="w"> </span><span class="n">pytest</span><span class="w"> </span><span class="n">pytest</span><span class="o">-</span><span class="n">xdist</span>
+<span class="w">      </span><span class="n">sudo</span><span class="w"> </span><span class="n">dpkg</span><span class="w"> </span><span class="o">--</span><span class="n">add</span><span class="o">-</span><span class="n">architecture</span><span class="w"> </span><span class="n">i386</span>
+<span class="w">      </span><span class="n">sudo</span><span class="w"> </span><span class="n">apt</span><span class="w"> </span><span class="n">update</span>
+<span class="w">      </span><span class="n">sudo</span><span class="w"> </span><span class="n">apt</span><span class="w"> </span><span class="n">install</span><span class="w"> </span><span class="o">-</span><span class="n">y</span><span class="w"> </span><span class="n">libc6</span><span class="p">:</span><span class="n">i386</span><span class="w"> </span><span class="n">libxtst6</span><span class="p">:</span><span class="n">i386</span><span class="w"> </span><span class="n">libncurses5</span><span class="p">:</span><span class="n">i386</span><span class="w"> </span><span class="n">libxft2</span><span class="p">:</span><span class="n">i386</span><span class="w"> </span><span class="n">libstdc</span><span class="o">++</span><span class="mi">6</span><span class="p">:</span><span class="n">i386</span><span class="w"> </span><span class="n">libc6</span><span class="o">-</span><span class="n">dev</span><span class="o">-</span><span class="n">i386</span><span class="w"> </span><span class="n">lib32z1</span><span class="w"> </span><span class="n">libqt5xml5</span><span class="w"> </span><span class="n">liblzma</span><span class="o">-</span><span class="n">dev</span>
+<span class="w">    </span><span class="n">wget</span><span class="w"> </span><span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">download</span><span class="o">.</span><span class="n">altera</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">akdlm</span><span class="o">/</span><span class="n">software</span><span class="o">/</span><span class="n">acdsinst</span><span class="o">/</span><span class="mf">20.1</span><span class="n">std</span><span class="o">/</span><span class="mi">711</span><span class="o">/</span><span class="n">ib_installers</span><span class="o">/</span><span class="n">ModelSimSetup</span><span class="o">-</span><span class="mf">20.1</span><span class="o">.</span><span class="mf">0.711</span><span class="o">-</span><span class="n">linux</span><span class="o">.</span><span class="n">run</span>
+<span class="w">        </span><span class="n">chmod</span><span class="w"> </span><span class="o">+</span><span class="n">x</span><span class="w"> </span><span class="n">ModelSimSetup</span><span class="o">-</span><span class="mf">20.1</span><span class="o">.</span><span class="mf">0.711</span><span class="o">-</span><span class="n">linux</span><span class="o">.</span><span class="n">run</span>
+<span class="w">    </span><span class="o">./</span><span class="n">ModelSimSetup</span><span class="o">-</span><span class="mf">20.1</span><span class="o">.</span><span class="mf">0.711</span><span class="o">-</span><span class="n">linux</span><span class="o">.</span><span class="n">run</span><span class="w"> </span><span class="o">--</span><span class="n">mode</span><span class="w"> </span><span class="n">unattended</span><span class="w"> </span><span class="o">--</span><span class="n">accept_eula</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="o">--</span><span class="n">installdir</span><span class="w"> </span><span class="o">$</span><span class="n">HOME</span><span class="o">/</span><span class="n">ModelSim</span><span class="o">-</span><span class="mf">20.1</span><span class="o">.</span><span class="mi">0</span><span class="w"> </span><span class="o">--</span><span class="n">unattendedmodeui</span><span class="w"> </span><span class="n">none</span>
+<span class="w">    </span><span class="n">echo</span><span class="w"> </span><span class="s2">&quot;$HOME/ModelSim-20.1.0/modelsim_ase/bin&quot;</span><span class="w"> </span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="o">$</span><span class="n">GITHUB_PATH</span>
+<span class="o">-</span><span class="w"> </span><span class="n">name</span><span class="p">:</span><span class="w"> </span><span class="n">Test</span><span class="w"> </span><span class="n">code</span>
+<span class="w">  </span><span class="n">working</span><span class="o">-</span><span class="n">directory</span><span class="p">:</span><span class="w"> </span><span class="o">./</span><span class="n">sim</span>
+<span class="w">  </span><span class="n">run</span><span class="p">:</span><span class="w"> </span><span class="o">|</span>
+<span class="w">    </span><span class="n">pytest</span><span class="w"> </span><span class="o">-</span><span class="n">n</span><span class="w"> </span><span class="n">auto</span><span class="w"> </span><span class="o">--</span><span class="n">sim</span><span class="w"> </span><span class="n">modelsim</span>
+</code></pre></div>
+
+<p>Тут кстати очень порадовала последняя версия Modelsim. Они наконец-то починили её! Каждый кто хоть раз устанавливал его на Ubuntu/Fedora поймёт о чём я (вот, например, инструкция для <a href="https://gist.github.com/esynr3z/e25c12cd3fdf82e98da281e1f5831d87">Quartus+Modelsim 19.1 и Fedora 29</a>).</p>
+<p>Ну и сравнение времени выполнения после очередного пуша в репозиторий:</p>
+<p><img alt="Modelsim vs Icarus as Github Actions" src="../../blog/2021-01-17-python-hdl-sim/github_ci.png"></p>
+<p>Даже не смотря на то, что скачивание 1.3GB установочника Modelsim и его распаковка занимают некоторое время (которое тем не менее, очень мало!), он оказывается в итоге ещё и быстрее моментально развертываемого Icarus.</p>
+<p>Тут конечно можно пойти дальше и подготовить Docker-образ с Modelsim, чтобы не качать его каждый раз сайта, но я, пожалуй, здесь остановлюсь.</p>
+<p>В целом, мне прям очень зашёл способ организации симуляции и тестирования с помощью Python, это как глоток свежего воздуха после Bash, который я чаще всего применял до этого. И надеюсь, что кому-нибудь описанное пригодится тоже.</p>
+<p>Все финальные версии скриптов лежат в репозитории <a href="https://github.com/esynr3z/pyhdlsim">pyhdlsim на GitHub</a>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Этот пост был также опубликован на <a href="https://habr.com/ru/post/537704/">Habr.com</a>.</p>
+</div>
+  </div>
+  <div class="tag-cloud">
+    <p>
+      <a href="../../tag/python/">python</a>
+    </p>
+  </div>
+
+
+  <div class="neighbors">
+    <a class="btn float-right" href="../../blog/2021-04-24-xilinx-axi-verification-ip/" title="Xilinx AXI Verification IP">
+      Next Post <i class="fa fa-angle-right"></i>
+    </a>
+  </div>
+
+  <div class="related-posts">
+    <h4>You might enjoy</h4>
+    <ul class="related-posts">
+      <li><a href="../../blog/2024-01-27-pip-hdl/">Using pip to Manage HDL Components</a></li>
+      <li><a href="../../blog/2021-09-03-corsair/">Corsair - генератор карты контрольно-статусных регистров</a></li>
+    </ul>
+  </div>
+
+
+
+<!-- Giscus -->
+<script>
+    function getCurrentTheme() {
+        if (document.body.classList.contains('dark-theme')) {
+            return 'dark'
+        } else if (document.body.classList.contains('light-theme')) {
+            return 'light'
+        } else {
+            var darkThemeMatch = window.matchMedia('(prefers-color-scheme: dark)');
+            var theme = localStorage.getItem('themeOverride');
+            if (theme !== 'light' && theme !== 'dark') {
+                if (theme === 'browser' || enableAutoDetectTheme) {
+                    theme = darkThemeMatch.matches ? 'dark' : 'light';
+                } else {
+                    theme = "dark";
+                }
+            }
+            return theme;
+        }
+    }
+
+    function updateGiscusTheme() {
+        console.log("updateGiscusTheme() called");
+
+        function sendMessage(message) {
+            const iframe = document.querySelector('iframe.giscus-frame');
+            if (!iframe) return;
+            iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+
+        const currentTheme = getCurrentTheme();
+        console.log("Changing theme to ", currentTheme);
+        sendMessage({
+            setConfig: {
+                theme: currentTheme,
+            },
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const giscusAttributes = {
+            "src": "https://giscus.app/client.js",
+            "data-repo": "positive-slack/positive-slack.github.io",
+            "data-repo-id": "R_kgDOK9PAQQ",
+            "data-category": "Posts",
+            "data-category-id": "DIC_kwDOK9PAQc4CcALQ",
+            "data-mapping": "title",
+            "data-strict": "1",
+            "data-reactions-enabled": "1",
+            "data-emit-metadata": "0",
+            "data-input-position": "bottom",
+            "data-theme": getCurrentTheme(),
+            "data-lang": "en",
+            "crossorigin": "anonymous",
+            "async": "",
+        };
+
+        // Dynamically create script tag
+        const giscusScript = document.createElement("script");
+        Object.entries(giscusAttributes).forEach(([key, value]) => giscusScript.setAttribute(key, value));
+        const targetElement = document.querySelector('article');
+        targetElement.appendChild(giscusScript);
+        updateGiscusTheme()
+
+        // Update giscus theme when theme switcher is clicked
+        document.body.addEventListener('themeChange', updateGiscusTheme);
+    });
+</script>
+
+<noscript>
+    Please enable JavaScript to view comments.
+</noscript>
+<!-- End Giscus -->
+</article>
+
+<footer>
+<p>
+  &copy; 2024  - This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/deed.en_US" target="_blank">Creative Commons Attribution-ShareAlike 4.0 International License</a>
+</p>
+<p>
+Built with <a href="http://getpelican.com" target="_blank">Pelican</a> using <a href="http://bit.ly/flex-pelican" target="_blank">Flex</a> theme
+  <span class="footer-separator">|</span>
+  Switch to the <a href="javascript:void(0)" onclick="theme.switch(`dark`)">dark</a> | <a href="javascript:void(0)" onclick="theme.switch(`light`)">light</a> | <a href="javascript:void(0)" onclick="theme.switch(`browser`)">browser</a> theme
+  <script id="dark-theme-script"
+          src="../../theme/dark-theme/dark-theme.min.js"
+          data-enable-auto-detect-theme="True"
+          data-default-theme="dark"
+          type="text/javascript">
+  </script>
+</p><p>
+  <a rel="license"
+     href="http://creativecommons.org/licenses/by-sa/4.0/"
+     target="_blank">
+    <img alt="Creative Commons License"
+         title="Creative Commons License"
+         style="border-width:0"
+           src="https://i.creativecommons.org/l/by-sa/4.0/80x15.png"
+         width="80"
+         height="15"/>
+  </a>
+</p>  <p>DISCLAIMER. Everything I share here are my own thoughts and opinions. They're not connected to my employer in any way.</p>
+</footer>  </main>
+
+<script type="application/ld+json">
+{
+  "@context" : "http://schema.org",
+  "@type" : "Blog",
+  "name": " positive slack blog ",
+  "url" : "../..",
+  "image": "/assets/logo.jpg",
+  "description": "digital design, verification and collaterals"
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,613 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="HandheldFriendly" content="True" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,400;0,700;1,400&family=Source+Sans+Pro:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" href="../../theme/stylesheet/style.min.css">
+
+    <link id="dark-theme-style" rel="stylesheet" type="text/css"
+          media="(prefers-color-scheme: dark), (prefers-color-scheme: no-preference)"
+    href="../../theme/stylesheet/dark-theme.min.css">
+
+    <link id="pygments-dark-theme" rel="stylesheet" type="text/css"
+              media="(prefers-color-scheme: dark), (prefers-color-scheme: no-preference)"
+          href="../../theme/pygments/monokai.min.css">
+    <link id="pygments-light-theme" rel="stylesheet" type="text/css"
+              media="(prefers-color-scheme: light)"
+          href="../../theme/pygments/emacs.min.css">
+
+
+
+  <link rel="stylesheet" type="text/css" href="../../theme/font-awesome/css/fontawesome.css">
+  <link rel="stylesheet" type="text/css" href="../../theme/font-awesome/css/brands.css">
+  <link rel="stylesheet" type="text/css" href="../../theme/font-awesome/css/solid.css">
+
+  <link rel="stylesheet" type="text/css" href="../../assets/css/myblog.css">
+
+
+  <!-- Chrome, Firefox OS and Opera -->
+  <meta name="theme-color" content="#369DBE">
+  <!-- Windows Phone -->
+  <meta name="msapplication-navbutton-color" content="#369DBE">
+  <!-- iOS Safari -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- Microsoft EDGE -->
+  <meta name="msapplication-TileColor" content="#369DBE">
+
+  <link href="https://positive-slack.github.io/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="positive slack blog Atom">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-7JN7249338"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  gtag('js', new Date());
+
+  gtag('config', 'G-7JN7249338');
+</script>
+
+
+
+
+
+
+ 
+
+<meta name="author" content="esynr3z" />
+<meta name="description" content="Небольшой обзор Xilinx AXI Verification IP - набора инструментов для верификации систем, собранных на AXI шинах. Что в комплекте, как использовать, как симулировать в Vivado и вне, и как тестировать AXI Slave с помощью AXI Master VIP." />
+<meta name="keywords" content="amba, axi, fpga, vip">
+
+
+  <meta property="og:site_name" content="positive slack blog"/>
+  <meta property="og:title" content="Xilinx AXI Verification IP"/>
+  <meta property="og:description" content="Небольшой обзор Xilinx AXI Verification IP - набора инструментов для верификации систем, собранных на AXI шинах. Что в комплекте, как использовать, как симулировать в Vivado и вне, и как тестировать AXI Slave с помощью AXI Master VIP."/>
+  <meta property="og:locale" content="en_US"/>
+  <meta property="og:url" content="../../blog/2021-04-24-xilinx-axi-verification-ip/"/>
+  <meta property="og:type" content="article"/>
+  <meta property="article:published_time" content="2021-04-24 10:20:00+03:00"/>
+  <meta property="article:modified_time" content="2024-01-27 11:40:56.662326+03:00"/>
+  <meta property="article:author" content="../../author/esynr3z/">
+  <meta property="article:section" content="Verification"/>
+  <meta property="article:tag" content="amba"/>
+  <meta property="article:tag" content="axi"/>
+  <meta property="article:tag" content="fpga"/>
+  <meta property="article:tag" content="vip"/>
+  <meta property="og:image" content="/assets/logo.jpg">
+
+  <title>positive slack blog &ndash; Xilinx AXI Verification IP</title>
+
+
+</head>
+<body >
+
+<aside>
+  <div>
+    <a href="../../">
+      <img src="/assets/logo.jpg" alt="positive slack blog" title="positive slack blog">
+    </a>
+
+    <h1>
+      <a href="../../">positive slack blog</a>
+    </h1>
+
+    <p>digital design, verification and collaterals</p>
+
+
+
+    <ul class="social">
+      <li>
+        <a class="sc-question"
+           href="/pages/about/"
+           target="_blank">
+          <i class="fa-solid fa-question"></i>
+        </a>
+      </li>
+      <li>
+        <a class="sc-github"
+           href="https://github.com/esynr3z"
+           target="_blank">
+          <i class="fa-brands fa-github"></i>
+        </a>
+      </li>
+      <li>
+        <a class="sc-telegram"
+           href="https://t.me/positiveslack"
+           target="_blank">
+          <i class="fa-brands fa-telegram"></i>
+        </a>
+      </li>
+      <li>
+        <a class="sc-comment"
+           href="https://github.com/positive-slack/positive-slack.github.io/discussions/categories/feedback"
+           target="_blank">
+          <i class="fa-solid fa-comment"></i>
+        </a>
+      </li>
+      <li>
+        <a class="sc-rss"
+           href="/feeds/all.atom.xml"
+           target="_blank">
+          <i class="fa-solid fa-rss"></i>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+</aside>
+  <main>
+
+<nav>
+  <a href="../../">Home</a>
+
+  <a href="/tag/">Tags</a>
+  <a href="/category/">Categories</a>
+  <a href="/archive/">Archives</a>
+</nav>
+
+<article class="single">
+  <header>
+      
+    <h1 id="2021-04-24-xilinx-axi-verification-ip">Xilinx AXI Verification IP</h1>
+    <p>
+      Posted on 24 Apr 2021 in <a href="../../category/verification/">Verification</a>
+
+        &#8226; 6 min read
+    </p>
+  </header>
+
+
+  <div>
+    <p>Небольшой обзор Xilinx AXI Verification IP - набора инструментов для верификации систем, собранных на AXI шинах.
+Что в комплекте, как использовать, как симулировать в Vivado и вне, и как тестировать AXI Slave с помощью AXI Master VIP.</p>
+<div class="toc"><span class="toctitle">Table of Contents</span><ul>
+<li><a href="#_1">Общее описание</a></li>
+<li><a href="#axi-slave">Собираем тестбенч для AXI Slave</a></li>
+<li><a href="#_2">Запуск симуляции</a></li>
+<li><a href="#_3">Полезные ссылки</a></li>
+</ul>
+</div>
+<h2 id="_1">Общее описание</h2>
+<p>Инструмент позволяет решать следующие задачи:</p>
+<ul>
+<li>Генерировать траффик от AXI Master (при верификации AXI Slave)</li>
+<li>Потреблять траффик в качестве AXI Slave (при верификации AXI Master)</li>
+<li>Слушать обмен между Master и Slave и контроллировать корректность транзакций (соответствие стандарту)</li>
+</ul>
+<p>Поддерживаются AXI3, AXI4, AXI-Lite.</p>
+<p>Схематично это будет выглядеть так:
+<a href="../../blog/2021-04-24-xilinx-axi-verification-ip/vip-arch.png"><img alt="vip-arch" src="../../blog/2021-04-24-xilinx-axi-verification-ip/vip-arch.png"></a></p>
+<p>В первых двух случаях, кстати, контроль корректности протокола тоже выполняется. Проверки основаны на документе от ARM: <a href="https://developer.arm.com/documentation/dui0534/latest/">AMBA 4 AXI4, AXI4-Lite, and AXI4-Stream Protocol Assertions User Guide</a>. Там собран список утверждений, формально описывающих работу AXI шины.</p>
+<p>Главный документ по VIP - это <a href="https://www.xilinx.com/support/documentation/ip_documentation/axi_vip/v1_1/pg267-axi-vip.pdf">PG267 - AXI Verification IP v1.1 Product Guide (v1.1)</a>.</p>
+<p>Кстати, описание AXI-Stream VIP находится в отдельном документе <a href="https://www.xilinx.com/support/documentation/ip_documentation/axi4stream_vip/v1_1/pg277-axi4stream-vip.pdf">PG277 - AXI4-Stream Verification IP v1.1 Product Guide (v1.1)</a>.</p>
+<p>Ну и сразу про исходники - они не зашифрованы, не обфусцированы. Открытый код на SystemVerilog с интенсивным использованием верификационного подмножества языка, т.е. не всякий симулятор подойдет - VIP заработают либо внутри Vivado, либо в дорогих коммерческих симуляторах типа Xcelium, Questa, VCS.</p>
+<p>По этой ссылке можно скачать архив с исходниками всех VIP и документацией на API:
+<a href="https://www.xilinx.com/support/documentation/ip_documentation/xilinx-vip-api-2019-1.zip">AXI VIP, AXI Stream VIP, Clock VIP, Reset VIP sources + API documentation (2019.1)</a></p>
+<p>Также исходники можно найти внутри Vivado:</p>
+<ul>
+<li><code>$XILINX_DIR/Vivado/2019.2/data/xilinx_vip/hdl</code></li>
+<li><code>$XILINX_DIR/Vivado/2019.2/data/xilinx_vip/include</code></li>
+</ul>
+<p>Ключевыми файлами являются <code>axi_vip_pkg.sv</code> и <code>axi_vip_if.sv</code>. Вся логика VIP утрамбована в первый из них. Всего-то 16к строк кода.</p>
+<h2 id="axi-slave">Собираем тестбенч для AXI Slave</h2>
+<p>Сделаем простой демонстрационный пример, где с помощью AXI Master VIP будем генерировать траффик в ведомый блок.</p>
+<p><a href="../../blog/2021-04-24-xilinx-axi-verification-ip/tb.png"><img alt="tb" src="../../blog/2021-04-24-xilinx-axi-verification-ip/tb.png"></a></p>
+<p>Принцип работы несложен, и будет знаком всем, кто использовал SystemVerilog классы и интерфейсы при верификации. Создается инстанс интерфейса AXI, который одним концом подключается к тестируемому устройству (DUT), а другим заходит в виртуальный интерфейс т.н. агента - объекта класса, обслуживающего транзакции. Нам же остается лишь вызывать методы агента (таски) для запуска нужной транзакции и получения результата.</p>
+<p>Есть несколько возможных путей для создания тестбенча:</p>
+<ul>
+<li>Описать полностью всё вручную: и инстанс VIP и тестбенч.</li>
+<li>Создать IP-ядро VIP блока в Vivado, а тестбенч описать вручную.</li>
+<li>Создать IP-ядро VIP блока в Vivado, а тестбенч сделать на основе примеров Vivado.</li>
+</ul>
+<p>Я решил пойти вторым путем, т.к. придется немного полазить по исходникам и это должно быть полезно с точки зрения понимания принципов работы, однако, утомительную параметризацию доверить GUI.</p>
+<p>Кстати, если кому интересен третий путь, то рекомендую посмотреть пост по ссылке: <a href="https://forums.xilinx.com/t5/Design-and-Debug-Techniques-Blog/AXI-Basics-2-Simulating-AXI-interfaces-with-the-AXI-Verification/ba-p/1053935">AXI Basics 2 - Simulating AXI interfaces with the AXI Verification IP (AXI VIP)</a>.</p>
+<p>Итак, сначала сгенериуем AXI Master VIP с нужными параметрами:</p>
+<ul>
+<li>Создаем пустой RTL project в Vivado (у меня 2019.2) - без исходников и констрейнтов, и всё равно под какой чип. Называем проект, например, <code>axi_vip_proj</code>.</li>
+<li>Переходим в IP Catalog и ищем AXI Verification IP.</li>
+<li>Щелкаем по нему два раза и начинаем кастомизацию параметров. Какие параметры на что влияют можно найти в <code>PG267 Ch.2: Product Specification</code>, а описание процесса кастомизации в <code>PG267 Ch.4: Design Flow Steps</code>.</li>
+<li>Для тестового проекта будет достаточно оставить всё по умолчанию и лишь выбрать <code>INTERFACE MODE - MASTER</code>. Ну и дать имя, скажем, <code>axi_vip_master</code>. Затем щелкаем OK, потом Generate.</li>
+</ul>
+<p>Все артефакты генерации будут расположены внутри директории с проектом в <code>axi_vip_proj.srcs/sources_1/ip/axi_vip_master</code>.</p>
+<p>Для симуляции нужны лишь несколько файлов из папок <code>hdl</code> и <code>sim</code>.</p>
+<ul>
+<li><code>sim/axi_vip_master.sv</code></li>
+<li><code>sim/axi_vip_master_pkg.sv</code></li>
+<li><code>hdl/axi_vip_v1_1_vl_rfs.sv</code></li>
+</ul>
+<p>По сути, это пара обёрток над интерфейсом VIP + некоторое количество констант.</p>
+<p>Создаём файл тестбенча <code>tb.sv</code>.</p>
+<p>В нём делаем некоторое количество алиасов для имён из пакета VIP мастера. Просто для удобства.</p>
+<div class="highlight"><pre><span></span><code><span class="o">:::</span><span class="n">verilog</span>
+<span class="k">typedef</span><span class="w"> </span><span class="n">axi_vip_master_pkg</span><span class="o">::</span><span class="n">axi_vip_master_mst_t</span><span class="w"> </span><span class="n">axi_mst_agent_t</span><span class="p">;</span>
+
+<span class="k">localparam</span><span class="w"> </span><span class="n">AXI_ADDR_W</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">axi_vip_master_pkg</span><span class="o">::</span><span class="n">axi_vip_master_VIP_ADDR_WIDTH</span><span class="p">;</span>
+<span class="k">localparam</span><span class="w"> </span><span class="n">AXI_DATA_W</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">axi_vip_master_pkg</span><span class="o">::</span><span class="n">axi_vip_master_VIP_DATA_WIDTH</span><span class="p">;</span>
+</code></pre></div>
+
+<p>Ну и добавляем остальные параметры AXI шины и создаём кастомные типы. По-хорошему надо всё это положить в отдельный пакет, но пока и так пойдёт.</p>
+<div class="highlight"><pre><span></span><code><span class="k">localparam</span><span class="w"> </span><span class="n">AXI_STRB_W</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AXI_DATA_W</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mh">8</span><span class="p">;</span>
+<span class="k">localparam</span><span class="w"> </span><span class="n">AXI_BURST_W</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">2</span><span class="p">;</span>
+<span class="k">localparam</span><span class="w"> </span><span class="n">AXI_CACHE_W</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">4</span><span class="p">;</span>
+<span class="c1">//&lt;---- code -----&gt;</span>
+<span class="k">localparam</span><span class="w"> </span><span class="n">AXI_SIZE_W</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">3</span><span class="p">;</span>
+<span class="k">localparam</span><span class="w"> </span><span class="n">AXI_RESP_W</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">2</span><span class="p">;</span>
+
+<span class="k">typedef</span><span class="w"> </span><span class="kt">logic</span><span class="w"> </span><span class="p">[</span><span class="n">AXI_ADDR_W</span><span class="o">-</span><span class="mh">1</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">axi_addr_t</span><span class="p">;</span>
+<span class="k">typedef</span><span class="w"> </span><span class="kt">logic</span><span class="w"> </span><span class="p">[</span><span class="n">AXI_DATA_W</span><span class="o">-</span><span class="mh">1</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">axi_data_t</span><span class="p">;</span>
+<span class="c1">//&lt;---- code -----&gt;</span>
+<span class="k">typedef</span><span class="w"> </span><span class="kt">logic</span><span class="w"> </span><span class="p">[</span><span class="n">AXI_QOS_W</span><span class="o">-</span><span class="mh">1</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">axi_qos_t</span><span class="p">;</span>
+
+<span class="k">typedef</span><span class="w"> </span><span class="k">enum</span><span class="w"> </span><span class="kt">logic</span><span class="w"> </span><span class="p">[</span><span class="n">AXI_BURST_W</span><span class="o">-</span><span class="mh">1</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="p">{</span>
+<span class="c1">//&lt;---- code -----&gt;</span>
+<span class="p">}</span><span class="w"> </span><span class="n">axi_burst_t</span><span class="p">;</span>
+
+<span class="k">typedef</span><span class="w"> </span><span class="k">enum</span><span class="w"> </span><span class="kt">logic</span><span class="w"> </span><span class="p">[</span><span class="n">AXI_RESP_W</span><span class="o">-</span><span class="mh">1</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="p">{</span>
+<span class="c1">//&lt;---- code -----&gt;</span>
+<span class="p">}</span><span class="w"> </span><span class="n">axi_resp_t</span><span class="p">;</span>
+
+<span class="k">typedef</span><span class="w"> </span><span class="k">enum</span><span class="w"> </span><span class="kt">logic</span><span class="w"> </span><span class="p">[</span><span class="n">AXI_SIZE_W</span><span class="o">-</span><span class="mh">1</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="p">{</span>
+<span class="c1">//&lt;---- code -----&gt;</span>
+<span class="p">}</span><span class="w"> </span><span class="n">axi_size_t</span><span class="p">;</span>
+</code></pre></div>
+
+<p>Теперь добавляем инстанс мастера - модуль расположен в файле <code>axi_vip_master.sv</code>, который был получен генерацией в Vivado. На самом деле, под несколькими слоями обёрток внутри там просто расположен инстанс интерфейса VIP из файла <code>axi_vip_if.sv</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="n">axi_vip_master</span><span class="w"> </span><span class="n">axi_mst</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="p">.</span><span class="n">aclk</span><span class="w">           </span><span class="p">(</span><span class="n">aclk</span><span class="p">),</span>
+<span class="w">    </span><span class="p">.</span><span class="n">aresetn</span><span class="w">        </span><span class="p">(</span><span class="n">aresetn</span><span class="p">),</span>
+<span class="w">    </span><span class="p">.</span><span class="n">m_axi_awaddr</span><span class="w">   </span><span class="p">(</span><span class="n">axi_awaddr</span><span class="p">),</span>
+<span class="w">    </span><span class="p">.</span><span class="n">m_axi_awlen</span><span class="w">    </span><span class="p">(</span><span class="n">axi_awlen</span><span class="p">),</span>
+<span class="c1">//&lt;---- code -----&gt;</span>
+<span class="w">    </span><span class="p">.</span><span class="n">m_axi_rready</span><span class="w">   </span><span class="p">(</span><span class="n">axi_rready</span><span class="p">)</span>
+<span class="p">);</span>
+</code></pre></div>
+
+<p>Интерфейс уже есть, а значит остался только второй компонент - агент для управления. Объявляем объект, в initial вызываем его конструктор, где привязываем интерфейс, и запускаем.</p>
+<div class="highlight"><pre><span></span><code><span class="n">axi_mst_agent_t</span><span class="w"> </span><span class="n">axi_mst_agent</span><span class="p">;</span>
+
+<span class="k">initial</span><span class="w"> </span><span class="k">begin</span>
+<span class="w">    </span><span class="n">axi_mst_agent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">new</span><span class="p">(</span><span class="s">&quot;axi_mst_agent&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">axi_mst</span><span class="p">.</span><span class="n">inst</span><span class="p">.</span><span class="n">IF</span><span class="p">);</span>
+<span class="w">    </span><span class="n">axi_mst_agent</span><span class="p">.</span><span class="n">start_master</span><span class="p">();</span>
+<span class="k">end</span>
+</code></pre></div>
+
+<p>Теперь можно в коде тестбенча вызывать таски <code>axi_mst_agent.AXI4_WRITE_BURST(...)</code> и <code>axi_mst_agent.AXI4_READ_BURST(...)</code>, чтобы запускать транзакции. В целом, рекомендую заглянуть <code>PG267 Ch.6: Test Bench</code> - там есть некоторое описание проделанных шагов.</p>
+<p>Также рекомендую заглянуть в документацию на API (ну или в исходники), чтобы посмотреть что это за звери такие <code>AXI4_WRITE_BURST</code> и <code>AXI4_READ_BURST</code> и какая у них сигнатура:</p>
+<p><a href="../../blog/2021-04-24-xilinx-axi-verification-ip/vip_tasks.png"><img alt="vip_tasks" src="../../blog/2021-04-24-xilinx-axi-verification-ip/vip_tasks.png"></a></p>
+<p>У этих тасков несколько избыточное количество аргументов, и работать с некоторыми из них не очень удобно - обратите внимание на <code>data</code> и <code>resp</code>. Они объявлены "с запасом" с учётом максимально возможного количества данных. Поэтому чаще всего захочется обернуть эти таски и получить более удобный и адаптированный к конкретной задаче интерфейс.</p>
+<div class="highlight"><pre><span></span><code><span class="k">task</span><span class="w"> </span><span class="n">axi_write</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="k">input</span><span class="w">  </span><span class="n">axi_addr_t</span><span class="w">  </span><span class="n">addr</span><span class="p">,</span>
+<span class="w">    </span><span class="k">input</span><span class="w">  </span><span class="n">axi_len_t</span><span class="w">   </span><span class="n">len</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">1</span><span class="p">,</span>
+<span class="w">    </span><span class="k">input</span><span class="w">  </span><span class="n">axi_size_t</span><span class="w">  </span><span class="n">size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AXI_SIZE_4B</span><span class="p">,</span>
+<span class="w">    </span><span class="k">input</span><span class="w">  </span><span class="n">axi_burst_t</span><span class="w"> </span><span class="n">burst</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AXI_BURST_INCR</span><span class="p">,</span>
+<span class="w">    </span><span class="k">input</span><span class="w">  </span><span class="n">axi_data_t</span><span class="w">  </span><span class="n">data</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">    </span><span class="k">output</span><span class="w"> </span><span class="n">axi_resp_t</span><span class="w">  </span><span class="n">resp</span><span class="w"> </span><span class="p">[]</span>
+<span class="p">);</span>
+<span class="w">    </span><span class="kt">logic</span><span class="w"> </span><span class="p">[(</span><span class="mh">4096</span><span class="o">/</span><span class="p">(</span><span class="n">AXI_DATA_W</span><span class="o">/</span><span class="mh">8</span><span class="p">))</span><span class="o">-</span><span class="mh">1</span><span class="o">:</span><span class="mh">0</span><span class="p">][</span><span class="n">AXI_DATA_W</span><span class="o">-</span><span class="mh">1</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">wdata</span><span class="p">;</span><span class="w"> </span><span class="c1">// 4096 bytes is a Xilinx AXI VIP data size</span>
+<span class="w">    </span><span class="n">axi_vip_pkg</span><span class="o">::</span><span class="n">xil_axi_resp_t</span><span class="w"> </span><span class="n">wresp</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="o">=</span><span class="mh">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">&lt;=</span><span class="n">len</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="k">begin</span>
+<span class="w">        </span><span class="n">wdata</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+<span class="w">    </span><span class="k">end</span>
+
+<span class="w">    </span><span class="n">axi_mst_agent</span><span class="p">.</span><span class="n">AXI4_WRITE_BURST</span><span class="p">(</span>
+<span class="w">        </span><span class="p">.</span><span class="n">id</span><span class="w">     </span><span class="p">(</span><span class="m">&#39;0</span><span class="p">),</span>
+<span class="w">        </span><span class="p">.</span><span class="n">addr</span><span class="w">   </span><span class="p">(</span><span class="n">axi_vip_pkg</span><span class="o">::</span><span class="n">xil_axi_ulong</span><span class="p">&#39;(</span><span class="n">addr</span><span class="p">)),</span>
+<span class="w">        </span><span class="p">.</span><span class="n">len</span><span class="w">    </span><span class="p">(</span><span class="n">axi_vip_pkg</span><span class="o">::</span><span class="n">xil_axi_len_t</span><span class="p">&#39;(</span><span class="n">len</span><span class="p">)),</span>
+<span class="w">        </span><span class="p">.</span><span class="n">size</span><span class="w">   </span><span class="p">(</span><span class="n">axi_vip_pkg</span><span class="o">::</span><span class="n">xil_axi_size_t</span><span class="p">&#39;(</span><span class="n">size</span><span class="p">)),</span>
+<span class="w">        </span><span class="p">.</span><span class="n">burst</span><span class="w">  </span><span class="p">(</span><span class="n">axi_vip_pkg</span><span class="o">::</span><span class="n">xil_axi_burst_t</span><span class="p">&#39;(</span><span class="n">burst</span><span class="p">)),</span>
+<span class="w">        </span><span class="p">.</span><span class="n">lock</span><span class="w">   </span><span class="p">(</span><span class="n">axi_vip_pkg</span><span class="o">::</span><span class="n">xil_axi_lock_t</span><span class="sc">&#39;(&#39;</span><span class="mh">0</span><span class="p">)),</span>
+<span class="w">        </span><span class="p">.</span><span class="n">cache</span><span class="w">  </span><span class="p">(</span><span class="m">&#39;0</span><span class="p">),</span>
+<span class="w">        </span><span class="p">.</span><span class="n">prot</span><span class="w">   </span><span class="p">(</span><span class="m">&#39;0</span><span class="p">),</span>
+<span class="w">        </span><span class="p">.</span><span class="n">region</span><span class="w"> </span><span class="p">(</span><span class="m">&#39;0</span><span class="p">),</span>
+<span class="w">        </span><span class="p">.</span><span class="n">qos</span><span class="w">    </span><span class="p">(</span><span class="m">&#39;0</span><span class="p">),</span>
+<span class="w">        </span><span class="p">.</span><span class="n">awuser</span><span class="w"> </span><span class="p">(</span><span class="m">&#39;0</span><span class="p">),</span>
+<span class="w">        </span><span class="p">.</span><span class="n">data</span><span class="w">   </span><span class="p">(</span><span class="n">wdata</span><span class="p">),</span>
+<span class="w">        </span><span class="p">.</span><span class="n">wuser</span><span class="w">  </span><span class="p">(</span><span class="m">&#39;0</span><span class="p">),</span>
+<span class="w">        </span><span class="p">.</span><span class="n">resp</span><span class="w">   </span><span class="p">(</span><span class="n">wresp</span><span class="p">)</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="w">    </span><span class="n">resp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">new</span><span class="p">[</span><span class="mh">1</span><span class="p">];</span>
+<span class="w">    </span><span class="n">resp</span><span class="p">[</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">axi_resp_t</span><span class="p">&#39;(</span><span class="n">wresp</span><span class="p">);</span>
+<span class="k">endtask</span>
+
+<span class="k">task</span><span class="w"> </span><span class="n">axi_read</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="k">input</span><span class="w">  </span><span class="n">axi_addr_t</span><span class="w">  </span><span class="n">addr</span><span class="p">,</span>
+<span class="w">    </span><span class="k">input</span><span class="w">  </span><span class="n">axi_len_t</span><span class="w">   </span><span class="n">len</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0</span><span class="p">,</span>
+<span class="w">    </span><span class="k">input</span><span class="w">  </span><span class="n">axi_size_t</span><span class="w">  </span><span class="n">size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AXI_SIZE_4B</span><span class="p">,</span>
+<span class="w">    </span><span class="k">input</span><span class="w">  </span><span class="n">axi_burst_t</span><span class="w"> </span><span class="n">burst</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">AXI_BURST_INCR</span><span class="p">,</span>
+<span class="w">    </span><span class="k">output</span><span class="w"> </span><span class="n">axi_data_t</span><span class="w">  </span><span class="n">data</span><span class="w"> </span><span class="p">[],</span>
+<span class="w">    </span><span class="k">output</span><span class="w"> </span><span class="n">axi_resp_t</span><span class="w">  </span><span class="n">resp</span><span class="w"> </span><span class="p">[]</span>
+<span class="p">);</span>
+<span class="w">    </span><span class="kt">bit</span><span class="w"> </span><span class="p">[</span><span class="mh">4096</span><span class="o">/</span><span class="p">(</span><span class="n">AXI_DATA_W</span><span class="o">/</span><span class="mh">8</span><span class="p">)</span><span class="o">-</span><span class="mh">1</span><span class="o">:</span><span class="mh">0</span><span class="p">][</span><span class="n">AXI_DATA_W</span><span class="o">-</span><span class="mh">1</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">data_o</span><span class="p">;</span><span class="w"> </span><span class="c1">// 4096 bytes is a Xilinx AXI VIP data size</span>
+<span class="w">    </span><span class="n">axi_vip_pkg</span><span class="o">::</span><span class="n">xil_axi_resp_t</span><span class="w"> </span><span class="p">[</span><span class="mh">255</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">resp_o</span><span class="p">;</span><span class="w"> </span><span class="c1">// 256 responses is a Xilinx AXI VIP parameter</span>
+<span class="w">    </span><span class="n">axi_vip_pkg</span><span class="o">::</span><span class="n">xil_axi_data_beat</span><span class="w"> </span><span class="p">[</span><span class="mh">255</span><span class="o">:</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="n">ruser_o</span><span class="p">;</span>
+<span class="w">    </span><span class="n">axi_mst_agent</span><span class="p">.</span><span class="n">AXI4_READ_BURST</span><span class="p">(</span>
+<span class="w">        </span><span class="p">.</span><span class="n">id</span><span class="w">     </span><span class="p">(</span><span class="mh">0</span><span class="p">),</span>
+<span class="w">        </span><span class="p">.</span><span class="n">addr</span><span class="w">   </span><span class="p">(</span><span class="n">axi_vip_pkg</span><span class="o">::</span><span class="n">xil_axi_ulong</span><span class="p">&#39;(</span><span class="n">addr</span><span class="p">)),</span>
+<span class="w">        </span><span class="p">.</span><span class="n">len</span><span class="w">    </span><span class="p">(</span><span class="n">axi_vip_pkg</span><span class="o">::</span><span class="n">xil_axi_len_t</span><span class="p">&#39;(</span><span class="n">len</span><span class="p">)),</span>
+<span class="w">        </span><span class="p">.</span><span class="n">size</span><span class="w">   </span><span class="p">(</span><span class="n">axi_vip_pkg</span><span class="o">::</span><span class="n">xil_axi_size_t</span><span class="p">&#39;(</span><span class="n">size</span><span class="p">)),</span>
+<span class="w">        </span><span class="p">.</span><span class="n">burst</span><span class="w">  </span><span class="p">(</span><span class="n">axi_vip_pkg</span><span class="o">::</span><span class="n">xil_axi_burst_t</span><span class="p">&#39;(</span><span class="n">burst</span><span class="p">)),</span>
+<span class="w">        </span><span class="p">.</span><span class="n">lock</span><span class="w">   </span><span class="p">(</span><span class="n">axi_vip_pkg</span><span class="o">::</span><span class="n">xil_axi_lock_t</span><span class="p">&#39;(</span><span class="mh">0</span><span class="p">)),</span>
+<span class="w">        </span><span class="p">.</span><span class="n">cache</span><span class="w">  </span><span class="p">(</span><span class="mh">0</span><span class="p">),</span>
+<span class="w">        </span><span class="p">.</span><span class="n">prot</span><span class="w">   </span><span class="p">(</span><span class="mh">0</span><span class="p">),</span>
+<span class="w">        </span><span class="p">.</span><span class="n">region</span><span class="w"> </span><span class="p">(</span><span class="mh">0</span><span class="p">),</span>
+<span class="w">        </span><span class="p">.</span><span class="n">qos</span><span class="w">    </span><span class="p">(</span><span class="mh">0</span><span class="p">),</span>
+<span class="w">        </span><span class="p">.</span><span class="n">aruser</span><span class="w"> </span><span class="p">(</span><span class="mh">0</span><span class="p">),</span>
+<span class="w">        </span><span class="p">.</span><span class="n">data</span><span class="w">   </span><span class="p">(</span><span class="n">data_o</span><span class="p">),</span>
+<span class="w">        </span><span class="p">.</span><span class="n">resp</span><span class="w">   </span><span class="p">(</span><span class="n">resp_o</span><span class="p">),</span>
+<span class="w">        </span><span class="p">.</span><span class="n">ruser</span><span class="w">  </span><span class="p">(</span><span class="n">ruser_o</span><span class="p">)</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="w">    </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">new</span><span class="p">[</span><span class="n">len</span><span class="o">+</span><span class="mh">1</span><span class="p">];</span>
+<span class="w">    </span><span class="n">resp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">new</span><span class="p">[</span><span class="n">len</span><span class="o">+</span><span class="mh">1</span><span class="p">];</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="o">=</span><span class="mh">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">&lt;=</span><span class="n">len</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="k">begin</span>
+<span class="w">        </span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">data_o</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+<span class="w">        </span><span class="n">resp</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">axi_resp_t</span><span class="p">&#39;(</span><span class="n">resp_o</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+<span class="w">    </span><span class="k">end</span><span class="p">;</span>
+<span class="k">endtask</span>
+</code></pre></div>
+
+<p>Теперь нужен AXI Slave для верификации. Я взял с гитхаба широко известного в узких кругах <a href="https://github.com/alexforencich/verilog-axi">Alex Forencich</a> модуль <a href="https://github.com/alexforencich/verilog-axi/blob/master/rtl/axi_ram.v">ОЗУ</a> с AXI Slave интерфейсом.</p>
+<p>Добавляем инстанс памяти в тестбенч.</p>
+<div class="highlight"><pre><span></span><code><span class="n">axi_ram</span><span class="w"> </span><span class="p">#(</span>
+<span class="w">    </span><span class="p">.</span><span class="n">DATA_WIDTH</span><span class="w"> </span><span class="p">(</span><span class="n">AXI_DATA_W</span><span class="p">),</span>
+<span class="w">    </span><span class="p">.</span><span class="n">ADDR_WIDTH</span><span class="w"> </span><span class="p">(</span><span class="n">AXI_ADDR_W</span><span class="p">),</span>
+<span class="w">    </span><span class="p">.</span><span class="n">STRB_WIDTH</span><span class="w"> </span><span class="p">(</span><span class="n">AXI_STRB_W</span><span class="p">)</span>
+<span class="p">)</span><span class="w"> </span><span class="n">dut</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="p">.</span><span class="n">clk</span><span class="w">            </span><span class="p">(</span><span class="n">aclk</span><span class="p">),</span>
+<span class="w">    </span><span class="p">.</span><span class="n">rst</span><span class="w">            </span><span class="p">(</span><span class="o">~</span><span class="n">areset</span><span class="p">),</span>
+<span class="w">    </span><span class="p">.</span><span class="n">s_axi_awid</span><span class="w">     </span><span class="p">(</span><span class="m">&#39;0</span><span class="p">),</span>
+<span class="w">    </span><span class="p">.</span><span class="n">s_axi_awaddr</span><span class="w">   </span><span class="p">(</span><span class="n">axi_awaddr</span><span class="p">[</span><span class="n">RAM_ADDR_W</span><span class="o">-</span><span class="mh">1</span><span class="o">:</span><span class="mh">0</span><span class="p">]),</span>
+<span class="w">    </span><span class="p">.</span><span class="n">s_axi_awlen</span><span class="w">    </span><span class="p">(</span><span class="n">axi_awlen</span><span class="p">),</span>
+<span class="c1">//&lt;---- code -----&gt;</span>
+<span class="w">    </span><span class="p">.</span><span class="n">s_axi_rlast</span><span class="w">    </span><span class="p">(</span><span class="n">axi_rlast</span><span class="p">),</span>
+<span class="w">    </span><span class="p">.</span><span class="n">s_axi_rvalid</span><span class="w">   </span><span class="p">(</span><span class="n">axi_rvalid</span><span class="p">),</span>
+<span class="w">    </span><span class="p">.</span><span class="n">s_axi_rready</span><span class="w">   </span><span class="p">(</span><span class="n">axi_rready</span><span class="p">)</span>
+<span class="p">);</span>
+</code></pre></div>
+
+<p>Ну и добавляем наполнение для теста. Оно тут простое - записать несколько слов в ОЗУ, затем их же и прочитать.</p>
+<div class="highlight"><pre><span></span><code><span class="k">initial</span><span class="w"> </span><span class="k">begin</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">tb_main</span>
+<span class="w">    </span><span class="n">axi_data_t</span><span class="w">  </span><span class="n">data</span><span class="w"> </span><span class="p">[];</span>
+<span class="w">    </span><span class="n">axi_resp_t</span><span class="w">  </span><span class="n">resp</span><span class="w"> </span><span class="p">[];</span>
+
+<span class="w">    </span><span class="k">wait</span><span class="p">(</span><span class="n">aresetn</span><span class="p">);</span>
+<span class="w">    </span><span class="k">repeat</span><span class="p">(</span><span class="mh">3</span><span class="p">)</span><span class="w"> </span><span class="p">@(</span><span class="k">posedge</span><span class="w"> </span><span class="n">aclk</span><span class="p">);</span>
+
+<span class="w">    </span><span class="nb">$display</span><span class="p">(</span><span class="s">&quot;Do write...&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">new</span><span class="p">[</span><span class="mh">3</span><span class="p">];</span>
+<span class="w">    </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="mh">32&#39;hdeadbeef</span><span class="p">,</span><span class="w"> </span><span class="mh">32&#39;hc0decafe</span><span class="p">,</span><span class="w"> </span><span class="mh">32&#39;hbabeb00b</span><span class="p">};</span>
+<span class="w">    </span><span class="n">axi_write</span><span class="p">(.</span><span class="n">addr</span><span class="p">(</span><span class="mh">&#39;h100</span><span class="p">),</span><span class="w"> </span><span class="p">.</span><span class="n">len</span><span class="p">(</span><span class="n">data</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="o">-</span><span class="mh">1</span><span class="p">),</span><span class="w"> </span><span class="p">.</span><span class="n">data</span><span class="p">(</span><span class="n">data</span><span class="p">),</span><span class="w"> </span><span class="p">.</span><span class="n">resp</span><span class="p">(</span><span class="n">resp</span><span class="p">));</span>
+
+<span class="w">    </span><span class="nb">$display</span><span class="p">(</span><span class="s">&quot;Do read...&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="n">axi_read</span><span class="p">(.</span><span class="n">addr</span><span class="p">(</span><span class="mh">&#39;h100</span><span class="p">),</span><span class="w"> </span><span class="p">.</span><span class="n">len</span><span class="p">(</span><span class="mh">2</span><span class="p">),</span><span class="w"> </span><span class="p">.</span><span class="n">data</span><span class="p">(</span><span class="n">data</span><span class="p">),</span><span class="w"> </span><span class="p">.</span><span class="n">resp</span><span class="p">(</span><span class="n">resp</span><span class="p">));</span>
+<span class="w">    </span><span class="n">foreach</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+<span class="w">        </span><span class="nb">$display</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\t</span><span class="s">%0d: data=0x%08x, resp=%0s&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="w"> </span><span class="n">resp</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">name</span><span class="p">());</span>
+
+<span class="w">    </span><span class="p">#</span><span class="mh">10</span><span class="n">us</span><span class="p">;</span>
+<span class="w">    </span><span class="nb">$stop</span><span class="p">;</span>
+<span class="k">end</span>
+</code></pre></div>
+
+<p>Финальную версию тестбенча можно посмотреть <a href="https://github.com/esynr3z/axi_vip_demo/blob/master/src/tb/tb.sv">здесь</a>.</p>
+<h2 id="_2">Запуск симуляции</h2>
+<p>Все исходники лежат на Github в репозитории <a href="https://github.com/esynr3z/axi_vip_demo">axi_vip_demo</a>.</p>
+<p>Итак, чтобы запустить симуляцию в Vivado XSim нам нужны исходники:</p>
+<div class="highlight"><pre><span></span><code>src
+├── axi_ram - модуль ОЗУ
+│   └── axi_ram.v
+├── axi_vip_master - файлы мастера, полученные генерацией из Vivado
+│   ├── axi_vip_master_pkg.sv
+│   ├── axi_vip_master.sv
+│   └── axi_vip_v1_1_vl_rfs.sv
+└── tb - тестбенч
+    └── tb.sv
+</code></pre></div>
+
+<p>И скрипты:</p>
+<div class="highlight"><pre><span></span><code>sim
+├── clean.sh - удалить все артефакты симуляции
+├── elab.sh - скомпилировать исходники
+├── sim.sh - запустить симулятор
+└── run.sh - скрипт-обертка
+</code></pre></div>
+
+<p>Принцип работы простой - запускаем <code>./run.sh</code>, исходники скомпилируются и запустится симулятор.
+Нужно лишь обратить внимание на один момент - внутренности <code>elab.sh</code>. Список всех нужных для компиляции исходников сохраняется в <code>files.prj</code> - там нету исходников Xilinx VIP. Они подгружаются в виде библиотеки <code>-L xilinx_vip</code> при вызове элаборатора.</p>
+<div class="highlight"><pre><span></span><code>cat<span class="w"> </span><span class="s">&lt;&lt;EOT &gt; files.prj</span>
+<span class="s">verilog work ../src/axi_ram/axi_ram.v</span>
+<span class="s">sv work ../src/axi_vip_master/axi_vip_master_pkg.sv</span>
+<span class="s">sv work ../src/axi_vip_master/axi_vip_v1_1_vl_rfs.sv</span>
+<span class="s">sv work ../src/axi_vip_master/axi_vip_master.sv</span>
+<span class="s">sv work ../src/tb/tb.sv</span>
+<span class="s">EOT</span>
+<span class="nv">XELAB_ARGS</span><span class="o">=</span><span class="s2">&quot;--debug typical --incr --relax --prj files.prj work.tb -L xilinx_vip&quot;</span>
+
+xelab<span class="w"> </span><span class="si">${</span><span class="nv">XELAB_ARGS</span><span class="si">}</span>
+</code></pre></div>
+
+<p>Однако, тут сразу же возникает вопрос - а как тогда запустить симуляцию вне Vivado?</p>
+<p>Для этого я сделал ещё один скрипт <code>elab_nolib.sh</code>:</p>
+<div class="highlight"><pre><span></span><code>cat<span class="w"> </span><span class="nt">&lt;&lt;EOT</span> <span class="nt">&gt; files.prj</span>
+<span class="err">verilog</span><span class="w"> </span><span class="err">work</span><span class="w"> </span><span class="err">../src/axi_ram/axi_ram.v</span>
+<span class="err">sv</span><span class="w"> </span><span class="err">work</span><span class="w"> </span><span class="err">../src/xilinx_vip/xil_common_vip_pkg.sv</span>
+<span class="err">sv</span><span class="w"> </span><span class="err">work</span><span class="w"> </span><span class="err">../src/xilinx_vip/axi_vip_pkg.sv</span>
+<span class="err">sv</span><span class="w"> </span><span class="err">work</span><span class="w"> </span><span class="err">../src/xilinx_vip/axi_vip_axi4pc.sv</span>
+<span class="err">sv</span><span class="w"> </span><span class="err">work</span><span class="w"> </span><span class="err">../src/xilinx_vip/axi_vip_if.sv</span>
+<span class="err">sv</span><span class="w"> </span><span class="err">work</span><span class="w"> </span><span class="err">../src/axi_vip_master/axi_vip_master_pkg.sv</span>
+<span class="err">sv</span><span class="w"> </span><span class="err">work</span><span class="w"> </span><span class="err">../src/axi_vip_master/axi_vip_v1_1_vl_rfs.sv</span>
+<span class="err">sv</span><span class="w"> </span><span class="err">work</span><span class="w"> </span><span class="err">../src/axi_vip_master/axi_vip_master.sv</span>
+<span class="err">sv</span><span class="w"> </span><span class="err">work</span><span class="w"> </span><span class="err">../src/tb/tb.sv</span>
+<span class="err">EOT</span>
+<span class="na">XELAB_ARGS=</span><span class="s">&quot;--debug typical --incr --relax --prj files.prj work.tb -i ../src/xilinx_vip&quot;</span>
+
+<span class="err">xelab</span><span class="w"> </span><span class="cp">${</span><span class="n">XELAB_ARGS</span><span class="cp">}</span>
+</code></pre></div>
+
+<p>Как видно, исчез ключ <code>-L</code> и добавилась папка <code>xilinx_vip</code>, также добавился путь для инклудов <code>-i ../src/xilinx_vip</code>. Bcе исходники в этой папке были взяты из <code>$XILINX_DIR/Vivado/2019.2/data/xilinx_vip</code>. Т.е. симуляцию в таком случае можно будет запустить в другом симуляторе, т.к. все необходимые файлы в наличии.</p>
+<p>Можно выполнить <code>./run.sh nolib</code> и тогда будет использован этот скрипт вместо первого.</p>
+<p>Запись выглядит так:</p>
+<p><a href="../../blog/2021-04-24-xilinx-axi-verification-ip/axi_write.png"><img alt="axi_write" src="../../blog/2021-04-24-xilinx-axi-verification-ip/axi_write.png"></a></p>
+<p>Чтение:</p>
+<p><a href="({static}axi_write.png)"><img alt="axi_read" src="../../blog/2021-04-24-xilinx-axi-verification-ip/axi_read.png"></a></p>
+<h2 id="_3">Полезные ссылки</h2>
+<ul>
+<li><a href="https://forums.xilinx.com/t5/Design-and-Debug-Techniques-Blog/AXI-Basics-2-Simulating-AXI-interfaces-with-the-AXI-Verification/ba-p/1053935">AXI Basics 2 - Simulating AXI interfaces with the AXI Verification IP (AXI VIP)</a></li>
+<li><a href="https://www.xilinx.com/support/documentation/ip_documentation/axi_vip/v1_1/pg267-axi-vip.pdf">PG267 - AXI Verification IP v1.1 Product Guide (v1.1)</a></li>
+<li><a href="https://www.xilinx.com/support/documentation/ip_documentation/axi4stream_vip/v1_1/pg277-axi4stream-vip.pdf">PG277 - AXI4-Stream Verification IP v1.1 Product Guide (v1.1)</a></li>
+<li><a href="https://www.xilinx.com/support/documentation/ip_documentation/clk_vip/v1_0/pg291-clk-vip.pdf">PG291 - Clock Verification IP v1.0 Product Guide (v1.0)</a></li>
+<li><a href="https://www.xilinx.com/support/documentation/ip_documentation/rst_vip/v1_0/pg298-rst-vip.pdf">PG298 - Reset Verification IP v1.0 Product Guide (v1.0)</a></li>
+<li><a href="https://www.xilinx.com/support/documentation/ip_documentation/axi_protocol_checker/v2_0/pg101-axi-protocol-checker.pdf">PG101 - AXI Protocol Checker v2.0 Product Guide (v2.0)</a></li>
+<li><a href="https://www.xilinx.com/support/documentation/ip_documentation/xilinx-vip-api-2019-1.zip">AXI VIP, AXI Stream VIP, Clock VIP, Reset VIP sources + API documentation (2019.1)</a></li>
+<li><a href="https://developer.arm.com/documentation/dui0534/latest/">AMBA 4 AXI4, AXI4-Lite, and AXI4-Stream Protocol Assertions User Guide</a></li>
+</ul>
+  </div>
+  <div class="tag-cloud">
+    <p>
+      <a href="../../tag/amba/">amba</a>
+      <a href="../../tag/axi/">axi</a>
+      <a href="../../tag/fpga/">fpga</a>
+      <a href="../../tag/vip/">vip</a>
+    </p>
+  </div>
+
+
+  <div class="neighbors">
+    <a class="btn float-left" href="../../blog/2021-01-17-python-hdl-sim/" title="Прокачиваем скрипты симуляции HDL с помощью Python и PyTest">
+      <i class="fa fa-angle-left"></i> Previous Post
+    </a>
+    <a class="btn float-right" href="../../blog/2021-07-16-ftdi-ft245/" title="FTDI USB-FIFO или режим FT245">
+      Next Post <i class="fa fa-angle-right"></i>
+    </a>
+  </div>
+
+  <div class="related-posts">
+    <h4>You might enjoy</h4>
+    <ul class="related-posts">
+      <li><a href="../../blog/2021-07-16-ftdi-ft245/">FTDI USB-FIFO или режим FT245</a></li>
+    </ul>
+  </div>
+
+
+
+<!-- Giscus -->
+<script>
+    function getCurrentTheme() {
+        if (document.body.classList.contains('dark-theme')) {
+            return 'dark'
+        } else if (document.body.classList.contains('light-theme')) {
+            return 'light'
+        } else {
+            var darkThemeMatch = window.matchMedia('(prefers-color-scheme: dark)');
+            var theme = localStorage.getItem('themeOverride');
+            if (theme !== 'light' && theme !== 'dark') {
+                if (theme === 'browser' || enableAutoDetectTheme) {
+                    theme = darkThemeMatch.matches ? 'dark' : 'light';
+                } else {
+                    theme = "dark";
+                }
+            }
+            return theme;
+        }
+    }
+
+    function updateGiscusTheme() {
+        console.log("updateGiscusTheme() called");
+
+        function sendMessage(message) {
+            const iframe = document.querySelector('iframe.giscus-frame');
+            if (!iframe) return;
+            iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+
+        const currentTheme = getCurrentTheme();
+        console.log("Changing theme to ", currentTheme);
+        sendMessage({
+            setConfig: {
+                theme: currentTheme,
+            },
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const giscusAttributes = {
+            "src": "https://giscus.app/client.js",
+            "data-repo": "positive-slack/positive-slack.github.io",
+            "data-repo-id": "R_kgDOK9PAQQ",
+            "data-category": "Posts",
+            "data-category-id": "DIC_kwDOK9PAQc4CcALQ",
+            "data-mapping": "title",
+            "data-strict": "1",
+            "data-reactions-enabled": "1",
+            "data-emit-metadata": "0",
+            "data-input-position": "bottom",
+            "data-theme": getCurrentTheme(),
+            "data-lang": "en",
+            "crossorigin": "anonymous",
+            "async": "",
+        };
+
+        // Dynamically create script tag
+        const giscusScript = document.createElement("script");
+        Object.entries(giscusAttributes).forEach(([key, value]) => giscusScript.setAttribute(key, value));
+        const targetElement = document.querySelector('article');
+        targetElement.appendChild(giscusScript);
+        updateGiscusTheme()
+
+        // Update giscus theme when theme switcher is clicked
+        document.body.addEventListener('themeChange', updateGiscusTheme);
+    });
+</script>
+
+<noscript>
+    Please enable JavaScript to view comments.
+</noscript>
+<!-- End Giscus -->
+</article>
+
+<footer>
+<p>
+  &copy; 2024  - This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/deed.en_US" target="_blank">Creative Commons Attribution-ShareAlike 4.0 International License</a>
+</p>
+<p>
+Built with <a href="http://getpelican.com" target="_blank">Pelican</a> using <a href="http://bit.ly/flex-pelican" target="_blank">Flex</a> theme
+  <span class="footer-separator">|</span>
+  Switch to the <a href="javascript:void(0)" onclick="theme.switch(`dark`)">dark</a> | <a href="javascript:void(0)" onclick="theme.switch(`light`)">light</a> | <a href="javascript:void(0)" onclick="theme.switch(`browser`)">browser</a> theme
+  <script id="dark-theme-script"
+          src="../../theme/dark-theme/dark-theme.min.js"
+          data-enable-auto-detect-theme="True"
+          data-default-theme="dark"
+          type="text/javascript">
+  </script>
+</p><p>
+  <a rel="license"
+     href="http://creativecommons.org/licenses/by-sa/4.0/"
+     target="_blank">
+    <img alt="Creative Commons License"
+         title="Creative Commons License"
+         style="border-width:0"
+           src="https://i.creativecommons.org/l/by-sa/4.0/80x15.png"
+         width="80"
+         height="15"/>
+  </a>
+</p>  <p>DISCLAIMER. Everything I share here are my own thoughts and opinions. They're not connected to my employer in any way.</p>
+</footer>  </main>
+
+<script type="application/ld+json">
+{
+  "@context" : "http://schema.org",
+  "@type" : "Blog",
+  "name": " positive slack blog ",
+  "url" : "../..",
+  "image": "/assets/logo.jpg",
+  "description": "digital design, verification and collaterals"
+}
+</script>
+</body>
+</html>

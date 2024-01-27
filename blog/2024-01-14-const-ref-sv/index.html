@@ -1,0 +1,513 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="HandheldFriendly" content="True" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,400;0,700;1,400&family=Source+Sans+Pro:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" href="../../theme/stylesheet/style.min.css">
+
+    <link id="dark-theme-style" rel="stylesheet" type="text/css"
+          media="(prefers-color-scheme: dark), (prefers-color-scheme: no-preference)"
+    href="../../theme/stylesheet/dark-theme.min.css">
+
+    <link id="pygments-dark-theme" rel="stylesheet" type="text/css"
+              media="(prefers-color-scheme: dark), (prefers-color-scheme: no-preference)"
+          href="../../theme/pygments/monokai.min.css">
+    <link id="pygments-light-theme" rel="stylesheet" type="text/css"
+              media="(prefers-color-scheme: light)"
+          href="../../theme/pygments/emacs.min.css">
+
+
+
+  <link rel="stylesheet" type="text/css" href="../../theme/font-awesome/css/fontawesome.css">
+  <link rel="stylesheet" type="text/css" href="../../theme/font-awesome/css/brands.css">
+  <link rel="stylesheet" type="text/css" href="../../theme/font-awesome/css/solid.css">
+
+  <link rel="stylesheet" type="text/css" href="../../assets/css/myblog.css">
+
+
+  <!-- Chrome, Firefox OS and Opera -->
+  <meta name="theme-color" content="#369DBE">
+  <!-- Windows Phone -->
+  <meta name="msapplication-navbutton-color" content="#369DBE">
+  <!-- iOS Safari -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- Microsoft EDGE -->
+  <meta name="msapplication-TileColor" content="#369DBE">
+
+  <link href="https://positive-slack.github.io/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="positive slack blog Atom">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-7JN7249338"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  gtag('js', new Date());
+
+  gtag('config', 'G-7JN7249338');
+</script>
+
+
+
+
+
+
+ 
+
+<meta name="author" content="esynr3z" />
+<meta name="description" content="Usually, a programmer uses const ref for a method argument when they want to show an intention to have read-only variable that isn&#39;t a copy of an original one. And this works as a hint perfectly, but what &#39;constant&#39; guarantees can the simulator actually provide? So, I&#39;ve started digging..." />
+<meta name="keywords" content="systemverilog">
+
+
+  <meta property="og:site_name" content="positive slack blog"/>
+  <meta property="og:title" content="Constant Reference in SystemVerilog: Is It Really Constant?"/>
+  <meta property="og:description" content="Usually, a programmer uses const ref for a method argument when they want to show an intention to have read-only variable that isn&#39;t a copy of an original one. And this works as a hint perfectly, but what &#39;constant&#39; guarantees can the simulator actually provide? So, I&#39;ve started digging..."/>
+  <meta property="og:locale" content="en_US"/>
+  <meta property="og:url" content="../../blog/2024-01-14-const-ref-sv/"/>
+  <meta property="og:type" content="article"/>
+  <meta property="article:published_time" content="2024-01-14 00:00:00+03:00"/>
+  <meta property="article:modified_time" content="2024-01-27 11:40:56.694326+03:00"/>
+  <meta property="article:author" content="../../author/esynr3z/">
+  <meta property="article:section" content="Verification"/>
+  <meta property="article:tag" content="systemverilog"/>
+  <meta property="og:image" content="cover_meme.png">
+
+  <title>positive slack blog &ndash; Constant Reference in SystemVerilog: Is It Really Constant?</title>
+
+
+</head>
+<body >
+
+<aside>
+  <div>
+    <a href="../../">
+      <img src="/assets/logo.jpg" alt="positive slack blog" title="positive slack blog">
+    </a>
+
+    <h1>
+      <a href="../../">positive slack blog</a>
+    </h1>
+
+    <p>digital design, verification and collaterals</p>
+
+
+
+    <ul class="social">
+      <li>
+        <a class="sc-question"
+           href="/pages/about/"
+           target="_blank">
+          <i class="fa-solid fa-question"></i>
+        </a>
+      </li>
+      <li>
+        <a class="sc-github"
+           href="https://github.com/esynr3z"
+           target="_blank">
+          <i class="fa-brands fa-github"></i>
+        </a>
+      </li>
+      <li>
+        <a class="sc-telegram"
+           href="https://t.me/positiveslack"
+           target="_blank">
+          <i class="fa-brands fa-telegram"></i>
+        </a>
+      </li>
+      <li>
+        <a class="sc-comment"
+           href="https://github.com/positive-slack/positive-slack.github.io/discussions/categories/feedback"
+           target="_blank">
+          <i class="fa-solid fa-comment"></i>
+        </a>
+      </li>
+      <li>
+        <a class="sc-rss"
+           href="/feeds/all.atom.xml"
+           target="_blank">
+          <i class="fa-solid fa-rss"></i>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+</aside>
+  <main>
+
+<nav>
+  <a href="../../">Home</a>
+
+  <a href="/tag/">Tags</a>
+  <a href="/category/">Categories</a>
+  <a href="/archive/">Archives</a>
+</nav>
+
+<article class="single">
+  <header>
+      
+    <h1 id="2024-01-14-const-ref-sv">Constant Reference in SystemVerilog: Is It Really Constant?</h1>
+    <p>
+      Posted on 14 Jan 2024 in <a href="../../category/verification/">Verification</a>
+
+        &#8226; 4 min read
+    </p>
+  </header>
+
+
+  <div>
+    <p>Usually, a programmer uses <code>const ref</code> for a method argument when they want to show an intention to have read-only variable that isn't a copy of an original one. And this works as a hint perfectly, but what 'constant' guarantees can the simulator actually provide? So, I've started digging...</p>
+<p><img alt="cover" src="../../blog/2024-01-14-const-ref-sv/cover_meme.png"></p>
+<div class="toc"><span class="toctitle">Table of Contents</span><ul>
+<li><a href="#constant-reference">Constant reference</a></li>
+<li><a href="#exploration">Exploration</a></li>
+<li><a href="#conclusions">Conclusions</a></li>
+</ul>
+</div>
+<h2 id="constant-reference">Constant reference</h2>
+<p>First of all, SV 2017 standard in "13.5.2 Pass by reference" has only two sentences and and an example related to <code>const ref</code>:</p>
+<blockquote>
+<p>To protect arguments passed by reference from being modified by a subroutine, the const qualifier can be used together with ref to indicate that the argument, although passed by reference, is a read-only variable.
+When the formal argument is declared as a const ref, the subroutine cannot alter the variable, and an
+attempt to do so shall generate a compiler error.</p>
+</blockquote>
+<div class="highlight"><pre><span></span><code><span class="k">task</span><span class="w"> </span><span class="k">automatic</span><span class="w"> </span><span class="n">show</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="k">ref</span><span class="w"> </span><span class="kt">byte</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="p">[]</span><span class="w"> </span><span class="p">);</span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">0</span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">data</span><span class="p">.</span><span class="n">size</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="n">j</span><span class="o">++</span><span class="w"> </span><span class="p">)</span>
+<span class="w">    </span><span class="nb">$display</span><span class="p">(</span><span class="w"> </span><span class="n">data</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="w"> </span><span class="p">);</span><span class="w"> </span><span class="c1">// data can be read but not written</span>
+<span class="k">endtask</span>
+</code></pre></div>
+
+<p>So, it should be more or less clear, that if you put a const variable on LHS, you get an error. However, what about array methods or members of an object?</p>
+<p>There is also one insight on constant object handles in "6.20.6 Const constants":</p>
+<blockquote>
+<p>In other words, the object acts like a variable that cannot be written. ...
+The members of the object can be written (except for those members
+that are declared const).</p>
+</blockquote>
+<p>We can also try to find something in explanations of the smartest of us (<a href="https://verificationacademy.com/forums/t/const-ref/31194/3">Dave Rich answers on verificationacademy</a>):</p>
+<blockquote>
+<p>Finally, to get to your original question, a <strong>const ref</strong> argument behaves the same as a <strong>ref</strong> argument, except that the compiler will treat the formal argument as read-only. There are a number of situations that require functions to have no side-effects (no modification of variables outside of the function except through the return value). So the LRM restricts functions in this situation to only having <strong>input</strong> or <strong>const ref</strong> arguments.</p>
+<p>Note that you almost never need to pass a class variable or virtual interface variable by reference since the handle is already a reference to an object. And a <strong>const ref</strong> argument of this type will only prevent you from changing the handle to point to another object. It will not prevent you from writing to a member of the class object.</p>
+</blockquote>
+<p>Interesting, huh? Let's check it on a practice.</p>
+<h2 id="exploration">Exploration</h2>
+<p>I've created the code that covers most of the cases with primitive data type, array and a handle. Code is annotated, so you can see when error is expected, when not, and when behavior is specific to simulator used.</p>
+<p>So, my expectations are:</p>
+<ul>
+<li>for primitive data type (e.g. <code>string</code>) - any modification should be an error;</li>
+<li>for arrays - putting a variable to LHS should be an error, however, reaction on calls of methods with side effects is unknown;</li>
+<li>for handles - putting a handle to LHS should be an error, call of any method (even with side effects) should not, and behavior on any access to members is unspecified.</li>
+</ul>
+<p>I have also added one special hack for a handle. This way constant qualifier is washed away and object should be modified without any restrictions.</p>
+<div class="highlight"><pre><span></span><code><span class="k">module</span><span class="w"> </span><span class="n">tb</span><span class="p">;</span>
+<span class="w">  </span><span class="k">function</span><span class="w"> </span><span class="k">automatic</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="n">ref_string</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">ref</span><span class="w"> </span><span class="k">string</span><span class="w"> </span><span class="n">arg</span><span class="p">);</span>
+<span class="w">    </span><span class="nb">$display</span><span class="p">(</span><span class="n">arg</span><span class="p">);</span>
+<span class="w">    </span><span class="n">arg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;foo&quot;</span><span class="p">;</span><span class="w"> </span><span class="c1">// error in any simulator</span>
+<span class="w">  </span><span class="k">endfunction</span>
+
+<span class="w">  </span><span class="k">function</span><span class="w"> </span><span class="k">automatic</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="n">ref_array</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">ref</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">arg</span><span class="w"> </span><span class="p">[]);</span>
+<span class="w">    </span><span class="nb">$display</span><span class="p">(</span><span class="s">&quot;%p, %0d&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">arg</span><span class="p">,</span><span class="w"> </span><span class="n">arg</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
+<span class="w">    </span><span class="n">arg</span><span class="p">[</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">5</span><span class="p">;</span><span class="w">   </span><span class="c1">// error in any simulator</span>
+<span class="w">    </span><span class="n">arg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">new</span><span class="p">[</span><span class="mh">3</span><span class="p">];</span><span class="w"> </span><span class="c1">// error in any simulator</span>
+<span class="w">    </span><span class="n">arg</span><span class="p">.</span><span class="n">delete</span><span class="p">();</span><span class="w"> </span><span class="c1">// simulator specific</span>
+<span class="w">  </span><span class="k">endfunction</span>
+
+<span class="w">  </span><span class="n">class</span><span class="w"> </span><span class="n">foo</span><span class="p">;</span>
+<span class="w">    </span><span class="k">string</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;foo&quot;</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">queue</span><span class="w"> </span><span class="p">[</span><span class="err">$</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">&#39;{</span><span class="mh">1</span><span class="p">,</span><span class="w"> </span><span class="mh">2</span><span class="p">,</span><span class="w"> </span><span class="mh">3</span><span class="p">};</span>
+
+<span class="w">    </span><span class="k">function</span><span class="w"> </span><span class="n">push_queue</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">val</span><span class="p">);</span>
+<span class="w">      </span><span class="n">this</span><span class="p">.</span><span class="n">queue</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">val</span><span class="p">);</span>
+<span class="w">    </span><span class="k">endfunction</span>
+<span class="w">  </span><span class="n">endclass</span>
+
+<span class="w">  </span><span class="k">function</span><span class="w"> </span><span class="k">automatic</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="n">ref_handle</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">ref</span><span class="w"> </span><span class="n">foo</span><span class="w"> </span><span class="n">arg</span><span class="p">);</span>
+<span class="w">    </span><span class="nb">$display</span><span class="p">(</span><span class="s">&quot;%s %p&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">$typename</span><span class="p">(</span><span class="n">arg</span><span class="p">),</span><span class="w"> </span><span class="n">arg</span><span class="p">.</span><span class="n">queue</span><span class="p">);</span>
+<span class="w">    </span><span class="n">arg</span><span class="p">.</span><span class="n">push_queue</span><span class="p">(</span><span class="mh">42</span><span class="p">);</span><span class="w">       </span><span class="c1">// no error in any simulator</span>
+<span class="w">    </span><span class="n">arg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">new</span><span class="p">();</span><span class="w">              </span><span class="c1">// error in any simulator</span>
+<span class="w">    </span><span class="n">arg</span><span class="p">.</span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;not_foo&quot;</span><span class="p">;</span><span class="w">       </span><span class="c1">// simulator specific</span>
+<span class="w">    </span><span class="n">arg</span><span class="p">.</span><span class="n">queue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">&#39;{</span><span class="mh">7</span><span class="p">,</span><span class="w"> </span><span class="mh">7</span><span class="w"> </span><span class="p">,</span><span class="mh">7</span><span class="p">};</span><span class="w">   </span><span class="c1">// simulator specific</span>
+<span class="w">    </span><span class="n">arg</span><span class="p">.</span><span class="n">queue</span><span class="p">[</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">42</span><span class="p">;</span><span class="w">        </span><span class="c1">// simulator specific</span>
+<span class="w">    </span><span class="n">arg</span><span class="p">.</span><span class="n">queue</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="mh">13</span><span class="p">);</span><span class="w">  </span><span class="c1">// simulator specific</span>
+<span class="w">  </span><span class="k">endfunction</span>
+
+<span class="w">  </span><span class="k">function</span><span class="w"> </span><span class="k">automatic</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="n">ref_handle_hack</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">ref</span><span class="w"> </span><span class="n">foo</span><span class="w"> </span><span class="n">arg</span><span class="p">);</span>
+<span class="w">    </span><span class="n">foo</span><span class="w"> </span><span class="n">noconst_arg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">arg</span><span class="p">;</span><span class="w">            </span><span class="c1">// now it&#39;s legal to modify</span>
+<span class="w">    </span><span class="n">noconst_arg</span><span class="p">.</span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;not_foo&quot;</span><span class="p">;</span><span class="w">       </span><span class="c1">// no error in any simulator</span>
+<span class="w">    </span><span class="n">noconst_arg</span><span class="p">.</span><span class="n">queue</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="mh">13</span><span class="p">);</span><span class="w">  </span><span class="c1">// no error in any simulator</span>
+<span class="w">    </span><span class="n">noconst_arg</span><span class="p">.</span><span class="n">queue</span><span class="p">[</span><span class="mh">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mh">42</span><span class="p">;</span><span class="w">        </span><span class="c1">// no error in any simulator</span>
+<span class="w">    </span><span class="n">noconst_arg</span><span class="p">.</span><span class="n">queue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">&#39;{</span><span class="mh">7</span><span class="p">,</span><span class="w"> </span><span class="mh">7</span><span class="w"> </span><span class="p">,</span><span class="mh">7</span><span class="p">};</span><span class="w">   </span><span class="c1">// no error in any simulator</span>
+<span class="w">  </span><span class="k">endfunction</span>
+
+<span class="w">  </span><span class="k">initial</span><span class="w"> </span><span class="k">begin</span>
+<span class="w">    </span><span class="k">automatic</span><span class="w"> </span><span class="k">string</span><span class="w"> </span><span class="n">str_var</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;str_a&quot;</span><span class="p">;</span>
+<span class="w">    </span><span class="k">automatic</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">arr_var</span><span class="w"> </span><span class="p">[]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">&#39;{</span><span class="mh">0</span><span class="p">,</span><span class="w"> </span><span class="mh">1</span><span class="p">,</span><span class="w"> </span><span class="mh">2</span><span class="p">};</span>
+<span class="w">    </span><span class="k">automatic</span><span class="w"> </span><span class="n">foo</span><span class="w"> </span><span class="n">foo_obj</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">new</span><span class="p">();</span>
+
+<span class="w">    </span><span class="n">ref_string</span><span class="p">(</span><span class="n">str_var</span><span class="p">);</span>
+<span class="w">    </span><span class="n">ref_array</span><span class="p">(</span><span class="n">arr_var</span><span class="p">);</span>
+<span class="w">    </span><span class="n">ref_handle</span><span class="p">(</span><span class="n">foo_obj</span><span class="p">);</span>
+<span class="w">    </span><span class="n">ref_handle_hack</span><span class="p">(</span><span class="n">foo_obj</span><span class="p">);</span>
+
+<span class="w">    </span><span class="nb">$finish</span><span class="p">;</span>
+<span class="w">  </span><span class="k">end</span>
+<span class="k">endmodule</span>
+</code></pre></div>
+
+<p>Below is the table with results of testing the code above in different simulators. Columns are sorted from the most strict to the most forgiving simulator. Encoding used:</p>
+<ul>
+<li>primitive - <code>string</code>, <code>int</code>, etc.</li>
+<li>aggregate - array, queue, etc.</li>
+<li>✅ - no compilation error</li>
+<li>❌ - compilation error</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Case</th>
+<th>VCS</th>
+<th>Verilator</th>
+<th>Riviera</th>
+<th>Modelsim</th>
+<th>Xcelium</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Primitive: modify</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>Aggregate: assign new</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>Aggregate: modify item</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>Aggregate: call modifying method</td>
+<td>❌</td>
+<td>✅</td>
+<td>✅</td>
+<td>❌</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Class: assign new</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>Class: call method with side effects</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Class: modify primitive</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Class: modify item of aggregate</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Class: assign new aggregate</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Class: call modifying method of aggregate</td>
+<td>❌</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Class: reassign to non-const handle</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+</tbody>
+</table>
+<p>Nothing new that every simulator behaves in its unique way, but for me was quite unexpected that Xcelium is the most forgiving one. However, it looks like it strictly follows the standard (banning everything explicitly mentioned), while others may ban some cases just for common sense. Also note, that I did't search for additional compilation arguments for any simulator, so results may vary in that case.</p>
+<h2 id="conclusions">Conclusions</h2>
+<ul>
+<li>Use <code>const ref</code> to express your <em>intention</em> to have passed by reference <em>read-only</em> variable within the scope.</li>
+<li>Consider <code>const</code> rather <em>hint</em>, than a bulletproof protection from modification, especially for a handle. This greatly depends on a simulator you use.</li>
+<li>Write you code with care, if you want it to be simulator-agnostic. Someone may even consider banning such constructions that behave so differently in different simulators.</li>
+</ul>
+  </div>
+  <div class="tag-cloud">
+    <p>
+      <a href="../../tag/systemverilog/">systemverilog</a>
+    </p>
+  </div>
+
+
+  <div class="neighbors">
+    <a class="btn float-left" href="../../blog/2023-12-27-positive-slack-blog-recharged/" title="positive slack blog recharged">
+      <i class="fa fa-angle-left"></i> Previous Post
+    </a>
+    <a class="btn float-right" href="../../blog/2024-01-27-pip-hdl/" title="Using pip to Manage HDL Components">
+      Next Post <i class="fa fa-angle-right"></i>
+    </a>
+  </div>
+
+
+
+
+<!-- Giscus -->
+<script>
+    function getCurrentTheme() {
+        if (document.body.classList.contains('dark-theme')) {
+            return 'dark'
+        } else if (document.body.classList.contains('light-theme')) {
+            return 'light'
+        } else {
+            var darkThemeMatch = window.matchMedia('(prefers-color-scheme: dark)');
+            var theme = localStorage.getItem('themeOverride');
+            if (theme !== 'light' && theme !== 'dark') {
+                if (theme === 'browser' || enableAutoDetectTheme) {
+                    theme = darkThemeMatch.matches ? 'dark' : 'light';
+                } else {
+                    theme = "dark";
+                }
+            }
+            return theme;
+        }
+    }
+
+    function updateGiscusTheme() {
+        console.log("updateGiscusTheme() called");
+
+        function sendMessage(message) {
+            const iframe = document.querySelector('iframe.giscus-frame');
+            if (!iframe) return;
+            iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+
+        const currentTheme = getCurrentTheme();
+        console.log("Changing theme to ", currentTheme);
+        sendMessage({
+            setConfig: {
+                theme: currentTheme,
+            },
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const giscusAttributes = {
+            "src": "https://giscus.app/client.js",
+            "data-repo": "positive-slack/positive-slack.github.io",
+            "data-repo-id": "R_kgDOK9PAQQ",
+            "data-category": "Posts",
+            "data-category-id": "DIC_kwDOK9PAQc4CcALQ",
+            "data-mapping": "title",
+            "data-strict": "1",
+            "data-reactions-enabled": "1",
+            "data-emit-metadata": "0",
+            "data-input-position": "bottom",
+            "data-theme": getCurrentTheme(),
+            "data-lang": "en",
+            "crossorigin": "anonymous",
+            "async": "",
+        };
+
+        // Dynamically create script tag
+        const giscusScript = document.createElement("script");
+        Object.entries(giscusAttributes).forEach(([key, value]) => giscusScript.setAttribute(key, value));
+        const targetElement = document.querySelector('article');
+        targetElement.appendChild(giscusScript);
+        updateGiscusTheme()
+
+        // Update giscus theme when theme switcher is clicked
+        document.body.addEventListener('themeChange', updateGiscusTheme);
+    });
+</script>
+
+<noscript>
+    Please enable JavaScript to view comments.
+</noscript>
+<!-- End Giscus -->
+</article>
+
+<footer>
+<p>
+  &copy; 2024  - This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/deed.en_US" target="_blank">Creative Commons Attribution-ShareAlike 4.0 International License</a>
+</p>
+<p>
+Built with <a href="http://getpelican.com" target="_blank">Pelican</a> using <a href="http://bit.ly/flex-pelican" target="_blank">Flex</a> theme
+  <span class="footer-separator">|</span>
+  Switch to the <a href="javascript:void(0)" onclick="theme.switch(`dark`)">dark</a> | <a href="javascript:void(0)" onclick="theme.switch(`light`)">light</a> | <a href="javascript:void(0)" onclick="theme.switch(`browser`)">browser</a> theme
+  <script id="dark-theme-script"
+          src="../../theme/dark-theme/dark-theme.min.js"
+          data-enable-auto-detect-theme="True"
+          data-default-theme="dark"
+          type="text/javascript">
+  </script>
+</p><p>
+  <a rel="license"
+     href="http://creativecommons.org/licenses/by-sa/4.0/"
+     target="_blank">
+    <img alt="Creative Commons License"
+         title="Creative Commons License"
+         style="border-width:0"
+           src="https://i.creativecommons.org/l/by-sa/4.0/80x15.png"
+         width="80"
+         height="15"/>
+  </a>
+</p>  <p>DISCLAIMER. Everything I share here are my own thoughts and opinions. They're not connected to my employer in any way.</p>
+</footer>  </main>
+
+<script type="application/ld+json">
+{
+  "@context" : "http://schema.org",
+  "@type" : "Blog",
+  "name": " positive slack blog ",
+  "url" : "../..",
+  "image": "/assets/logo.jpg",
+  "description": "digital design, verification and collaterals"
+}
+</script>
+</body>
+</html>

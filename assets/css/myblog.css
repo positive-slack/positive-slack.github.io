@@ -1,0 +1,53 @@
+a {
+    color: #369dbe;
+}
+
+a:hover {
+    color: #47cefb
+}
+
+.tag-cloud a {
+    background-color: #369dbe;
+    padding: .2em .6em;
+    font-size: .74em;
+    line-height: 1;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: .25em
+}
+
+.tag-cloud a:hover {
+    background-color: #47cefb
+}
+
+a.btn,
+section#isso-thread section.auth-section p.post-action input {
+    background-color: #369dbe;
+    padding: .6em;
+    font-size: .8em;
+    line-height: 1;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border: none;
+    border-radius: .25em
+}
+
+a.btn:hover {
+    background-color: #47cefb
+}
+
+a.sc-telegram {
+    background-color: #0088cc;
+}
+
+a.sc-question {
+    background-color: #36be88;
+}
+
+a.sc-comment {
+    background-color: #000000;
+}

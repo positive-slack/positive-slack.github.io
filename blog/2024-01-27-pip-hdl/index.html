@@ -1,0 +1,325 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="HandheldFriendly" content="True" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,400;0,700;1,400&family=Source+Sans+Pro:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" href="../../theme/stylesheet/style.min.css">
+
+    <link id="dark-theme-style" rel="stylesheet" type="text/css"
+          media="(prefers-color-scheme: dark), (prefers-color-scheme: no-preference)"
+    href="../../theme/stylesheet/dark-theme.min.css">
+
+    <link id="pygments-dark-theme" rel="stylesheet" type="text/css"
+              media="(prefers-color-scheme: dark), (prefers-color-scheme: no-preference)"
+          href="../../theme/pygments/monokai.min.css">
+    <link id="pygments-light-theme" rel="stylesheet" type="text/css"
+              media="(prefers-color-scheme: light)"
+          href="../../theme/pygments/emacs.min.css">
+
+
+
+  <link rel="stylesheet" type="text/css" href="../../theme/font-awesome/css/fontawesome.css">
+  <link rel="stylesheet" type="text/css" href="../../theme/font-awesome/css/brands.css">
+  <link rel="stylesheet" type="text/css" href="../../theme/font-awesome/css/solid.css">
+
+  <link rel="stylesheet" type="text/css" href="../../assets/css/myblog.css">
+
+
+  <!-- Chrome, Firefox OS and Opera -->
+  <meta name="theme-color" content="#369DBE">
+  <!-- Windows Phone -->
+  <meta name="msapplication-navbutton-color" content="#369DBE">
+  <!-- iOS Safari -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- Microsoft EDGE -->
+  <meta name="msapplication-TileColor" content="#369DBE">
+
+  <link href="https://positive-slack.github.io/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="positive slack blog Atom">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-7JN7249338"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  gtag('js', new Date());
+
+  gtag('config', 'G-7JN7249338');
+</script>
+
+
+
+
+
+
+ 
+
+<meta name="author" content="esynr3z" />
+<meta name="description" content="There is no any standard package manager for HDL components. What if you take a package manager from a popular language and try to adapt it to HDL?" />
+<meta name="keywords" content="python">
+
+
+  <meta property="og:site_name" content="positive slack blog"/>
+  <meta property="og:title" content="Using pip to Manage HDL Components"/>
+  <meta property="og:description" content="There is no any standard package manager for HDL components. What if you take a package manager from a popular language and try to adapt it to HDL?"/>
+  <meta property="og:locale" content="en_US"/>
+  <meta property="og:url" content="../../blog/2024-01-27-pip-hdl/"/>
+  <meta property="og:type" content="article"/>
+  <meta property="article:published_time" content="2024-01-27 00:00:00+03:00"/>
+  <meta property="article:modified_time" content="2024-01-27 11:40:56.694326+03:00"/>
+  <meta property="article:author" content="../../author/esynr3z/">
+  <meta property="article:section" content="Automation"/>
+  <meta property="article:tag" content="python"/>
+  <meta property="og:image" content="cover_meme.jpg">
+
+  <title>positive slack blog &ndash; Using pip to Manage HDL Components</title>
+
+
+</head>
+<body >
+
+<aside>
+  <div>
+    <a href="../../">
+      <img src="/assets/logo.jpg" alt="positive slack blog" title="positive slack blog">
+    </a>
+
+    <h1>
+      <a href="../../">positive slack blog</a>
+    </h1>
+
+    <p>digital design, verification and collaterals</p>
+
+
+
+    <ul class="social">
+      <li>
+        <a class="sc-question"
+           href="/pages/about/"
+           target="_blank">
+          <i class="fa-solid fa-question"></i>
+        </a>
+      </li>
+      <li>
+        <a class="sc-github"
+           href="https://github.com/esynr3z"
+           target="_blank">
+          <i class="fa-brands fa-github"></i>
+        </a>
+      </li>
+      <li>
+        <a class="sc-telegram"
+           href="https://t.me/positiveslack"
+           target="_blank">
+          <i class="fa-brands fa-telegram"></i>
+        </a>
+      </li>
+      <li>
+        <a class="sc-comment"
+           href="https://github.com/positive-slack/positive-slack.github.io/discussions/categories/feedback"
+           target="_blank">
+          <i class="fa-solid fa-comment"></i>
+        </a>
+      </li>
+      <li>
+        <a class="sc-rss"
+           href="/feeds/all.atom.xml"
+           target="_blank">
+          <i class="fa-solid fa-rss"></i>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+</aside>
+  <main>
+
+<nav>
+  <a href="../../">Home</a>
+
+  <a href="/tag/">Tags</a>
+  <a href="/category/">Categories</a>
+  <a href="/archive/">Archives</a>
+</nav>
+
+<article class="single">
+  <header>
+      
+    <h1 id="2024-01-27-pip-hdl">Using pip to Manage HDL Components</h1>
+    <p>
+      Posted on 27 Jan 2024 in <a href="../../category/automation/">Automation</a>
+
+        &#8226; 2 min read
+    </p>
+  </header>
+
+
+  <div>
+    <p><img alt="cover" src="../../blog/2024-01-27-pip-hdl/cover_meme.jpg"></p>
+<div class="toc"><span class="toctitle">Table of Contents</span><ul>
+<li><a href="#the-problem">The Problem</a></li>
+<li><a href="#the-idea">The Idea</a></li>
+<li><a href="#the-solution">The Solution</a></li>
+<li><a href="#bottom-line">Bottom Line</a></li>
+</ul>
+</div>
+<p>Attention, I am going to advocate non-traditional development flow. Relax and take it easy.</p>
+<h2 id="the-problem">The Problem</h2>
+<p>In the world of HDL languages, we have natural reusable containers like packages and modules. However, the infrastructure does not include any standard package manager like we have in modern programming languages. With this kind of tool you can smoothly manage variety of components, versions and dependencies with ease.</p>
+<p>So, in HDL world it is quite common to invent in-house flows and tools to make reusable components manageable. We even have open source solutions addressing this like well-known <a href="https://github.com/olofk/fusesoc">FuseSoc</a>.</p>
+<h2 id="the-idea">The Idea</h2>
+<p>But what if you take a package manager from any popular language and try to adapt it to HDL?</p>
+<p>I've chosen Python <a href="https://pypi.org/project/pip/">pip</a> for this experiment, because Python has become widely used in ASIC/FPGA flows, and <code>pip</code> itself is just about everywhere. Its packages are straightforward to create, publish, and use. And the last reason - why not, it should be fun!</p>
+<h2 id="the-solution">The Solution</h2>
+<p>Basically, you don't need anything to distribute HDL via <code>pip</code>. Just pack and publish in any convenient way to local or global repository.</p>
+<p>However, you'll likely need a way to get the path to sources, or a filelist, or other components necessary for compiling and simulating your HDL. That's why I hid such and other boilerplate inside <code>pip-hdl</code> package. As a result, only two extra files for 5-10 lines of code are required to build a package with HDL inside. These files can even be automatically generated by the tool. And with that, you are ready to go!</p>
+<p>Here is my proof-of-concept: <a href="https://github.com/esynr3z/pip-hdl">github repo</a>, <a href="https://github.com/esynr3z/pip-hdl/blob/main/README.md">detailed guide</a> and <a href="https://github.com/esynr3z/pip-hdl/tree/main/example">examples</a>. Package <a href="https://pypi.org/project/pip-hdl/">pip-hdl</a> is available at PyPi.</p>
+<p>Please explore these resources for a better understanding of how it works. Keep in mind, though, that this project is still in its early stages and hasn't been used in production or tested extensively yet.</p>
+<h2 id="bottom-line">Bottom Line</h2>
+<p>As a result, you can get all the power of pip for a UVM agent, FIFO or other component for almost free. And it comes with clear dependency control, versioning and straightforward delivery method to the machine. Isn't that great?</p>
+  </div>
+  <div class="tag-cloud">
+    <p>
+      <a href="../../tag/python/">python</a>
+    </p>
+  </div>
+
+
+  <div class="neighbors">
+    <a class="btn float-left" href="../../blog/2024-01-14-const-ref-sv/" title="Constant Reference in SystemVerilog: Is It Really Constant?">
+      <i class="fa fa-angle-left"></i> Previous Post
+    </a>
+  </div>
+
+  <div class="related-posts">
+    <h4>You might enjoy</h4>
+    <ul class="related-posts">
+      <li><a href="../../blog/2021-09-03-corsair/">Corsair - генератор карты контрольно-статусных регистров</a></li>
+      <li><a href="../../blog/2021-01-17-python-hdl-sim/">Прокачиваем скрипты симуляции HDL с помощью Python и PyTest</a></li>
+    </ul>
+  </div>
+
+
+
+<!-- Giscus -->
+<script>
+    function getCurrentTheme() {
+        if (document.body.classList.contains('dark-theme')) {
+            return 'dark'
+        } else if (document.body.classList.contains('light-theme')) {
+            return 'light'
+        } else {
+            var darkThemeMatch = window.matchMedia('(prefers-color-scheme: dark)');
+            var theme = localStorage.getItem('themeOverride');
+            if (theme !== 'light' && theme !== 'dark') {
+                if (theme === 'browser' || enableAutoDetectTheme) {
+                    theme = darkThemeMatch.matches ? 'dark' : 'light';
+                } else {
+                    theme = "dark";
+                }
+            }
+            return theme;
+        }
+    }
+
+    function updateGiscusTheme() {
+        console.log("updateGiscusTheme() called");
+
+        function sendMessage(message) {
+            const iframe = document.querySelector('iframe.giscus-frame');
+            if (!iframe) return;
+            iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+
+        const currentTheme = getCurrentTheme();
+        console.log("Changing theme to ", currentTheme);
+        sendMessage({
+            setConfig: {
+                theme: currentTheme,
+            },
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const giscusAttributes = {
+            "src": "https://giscus.app/client.js",
+            "data-repo": "positive-slack/positive-slack.github.io",
+            "data-repo-id": "R_kgDOK9PAQQ",
+            "data-category": "Posts",
+            "data-category-id": "DIC_kwDOK9PAQc4CcALQ",
+            "data-mapping": "title",
+            "data-strict": "1",
+            "data-reactions-enabled": "1",
+            "data-emit-metadata": "0",
+            "data-input-position": "bottom",
+            "data-theme": getCurrentTheme(),
+            "data-lang": "en",
+            "crossorigin": "anonymous",
+            "async": "",
+        };
+
+        // Dynamically create script tag
+        const giscusScript = document.createElement("script");
+        Object.entries(giscusAttributes).forEach(([key, value]) => giscusScript.setAttribute(key, value));
+        const targetElement = document.querySelector('article');
+        targetElement.appendChild(giscusScript);
+        updateGiscusTheme()
+
+        // Update giscus theme when theme switcher is clicked
+        document.body.addEventListener('themeChange', updateGiscusTheme);
+    });
+</script>
+
+<noscript>
+    Please enable JavaScript to view comments.
+</noscript>
+<!-- End Giscus -->
+</article>
+
+<footer>
+<p>
+  &copy; 2024  - This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/deed.en_US" target="_blank">Creative Commons Attribution-ShareAlike 4.0 International License</a>
+</p>
+<p>
+Built with <a href="http://getpelican.com" target="_blank">Pelican</a> using <a href="http://bit.ly/flex-pelican" target="_blank">Flex</a> theme
+  <span class="footer-separator">|</span>
+  Switch to the <a href="javascript:void(0)" onclick="theme.switch(`dark`)">dark</a> | <a href="javascript:void(0)" onclick="theme.switch(`light`)">light</a> | <a href="javascript:void(0)" onclick="theme.switch(`browser`)">browser</a> theme
+  <script id="dark-theme-script"
+          src="../../theme/dark-theme/dark-theme.min.js"
+          data-enable-auto-detect-theme="True"
+          data-default-theme="dark"
+          type="text/javascript">
+  </script>
+</p><p>
+  <a rel="license"
+     href="http://creativecommons.org/licenses/by-sa/4.0/"
+     target="_blank">
+    <img alt="Creative Commons License"
+         title="Creative Commons License"
+         style="border-width:0"
+           src="https://i.creativecommons.org/l/by-sa/4.0/80x15.png"
+         width="80"
+         height="15"/>
+  </a>
+</p>  <p>DISCLAIMER. Everything I share here are my own thoughts and opinions. They're not connected to my employer in any way.</p>
+</footer>  </main>
+
+<script type="application/ld+json">
+{
+  "@context" : "http://schema.org",
+  "@type" : "Blog",
+  "name": " positive slack blog ",
+  "url" : "../..",
+  "image": "/assets/logo.jpg",
+  "description": "digital design, verification and collaterals"
+}
+</script>
+</body>
+</html>

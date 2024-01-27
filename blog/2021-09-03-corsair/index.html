@@ -1,0 +1,440 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="HandheldFriendly" content="True" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,400;0,700;1,400&family=Source+Sans+Pro:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" href="../../theme/stylesheet/style.min.css">
+
+    <link id="dark-theme-style" rel="stylesheet" type="text/css"
+          media="(prefers-color-scheme: dark), (prefers-color-scheme: no-preference)"
+    href="../../theme/stylesheet/dark-theme.min.css">
+
+    <link id="pygments-dark-theme" rel="stylesheet" type="text/css"
+              media="(prefers-color-scheme: dark), (prefers-color-scheme: no-preference)"
+          href="../../theme/pygments/monokai.min.css">
+    <link id="pygments-light-theme" rel="stylesheet" type="text/css"
+              media="(prefers-color-scheme: light)"
+          href="../../theme/pygments/emacs.min.css">
+
+
+
+  <link rel="stylesheet" type="text/css" href="../../theme/font-awesome/css/fontawesome.css">
+  <link rel="stylesheet" type="text/css" href="../../theme/font-awesome/css/brands.css">
+  <link rel="stylesheet" type="text/css" href="../../theme/font-awesome/css/solid.css">
+
+  <link rel="stylesheet" type="text/css" href="../../assets/css/myblog.css">
+
+
+  <!-- Chrome, Firefox OS and Opera -->
+  <meta name="theme-color" content="#369DBE">
+  <!-- Windows Phone -->
+  <meta name="msapplication-navbutton-color" content="#369DBE">
+  <!-- iOS Safari -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- Microsoft EDGE -->
+  <meta name="msapplication-TileColor" content="#369DBE">
+
+  <link href="https://positive-slack.github.io/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="positive slack blog Atom">
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-7JN7249338"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  gtag('js', new Date());
+
+  gtag('config', 'G-7JN7249338');
+</script>
+
+
+
+
+
+
+ 
+
+<meta name="author" content="esynr3z" />
+<meta name="description" content="Написал свой генератор карты CSR на Python и Jinja2." />
+<meta name="keywords" content="python">
+
+
+  <meta property="og:site_name" content="positive slack blog"/>
+  <meta property="og:title" content="Corsair - генератор карты контрольно-статусных регистров"/>
+  <meta property="og:description" content="Написал свой генератор карты CSR на Python и Jinja2."/>
+  <meta property="og:locale" content="en_US"/>
+  <meta property="og:url" content="../../blog/2021-09-03-corsair/"/>
+  <meta property="og:type" content="article"/>
+  <meta property="article:published_time" content="2021-09-03 10:20:00+03:00"/>
+  <meta property="article:modified_time" content="2024-01-27 11:40:56.686326+03:00"/>
+  <meta property="article:author" content="../../author/esynr3z/">
+  <meta property="article:section" content="Automation"/>
+  <meta property="article:tag" content="python"/>
+  <meta property="og:image" content="/assets/logo.jpg">
+
+  <title>positive slack blog &ndash; Corsair - генератор карты контрольно-статусных регистров</title>
+
+
+</head>
+<body >
+
+<aside>
+  <div>
+    <a href="../../">
+      <img src="/assets/logo.jpg" alt="positive slack blog" title="positive slack blog">
+    </a>
+
+    <h1>
+      <a href="../../">positive slack blog</a>
+    </h1>
+
+    <p>digital design, verification and collaterals</p>
+
+
+
+    <ul class="social">
+      <li>
+        <a class="sc-question"
+           href="/pages/about/"
+           target="_blank">
+          <i class="fa-solid fa-question"></i>
+        </a>
+      </li>
+      <li>
+        <a class="sc-github"
+           href="https://github.com/esynr3z"
+           target="_blank">
+          <i class="fa-brands fa-github"></i>
+        </a>
+      </li>
+      <li>
+        <a class="sc-telegram"
+           href="https://t.me/positiveslack"
+           target="_blank">
+          <i class="fa-brands fa-telegram"></i>
+        </a>
+      </li>
+      <li>
+        <a class="sc-comment"
+           href="https://github.com/positive-slack/positive-slack.github.io/discussions/categories/feedback"
+           target="_blank">
+          <i class="fa-solid fa-comment"></i>
+        </a>
+      </li>
+      <li>
+        <a class="sc-rss"
+           href="/feeds/all.atom.xml"
+           target="_blank">
+          <i class="fa-solid fa-rss"></i>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+</aside>
+  <main>
+
+<nav>
+  <a href="../../">Home</a>
+
+  <a href="/tag/">Tags</a>
+  <a href="/category/">Categories</a>
+  <a href="/archive/">Archives</a>
+</nav>
+
+<article class="single">
+  <header>
+      
+    <h1 id="2021-09-03-corsair">Corsair - генератор карты контрольно-статусных регистров</h1>
+    <p>
+      Posted on 03 Sep 2021 in <a href="../../category/automation/">Automation</a>
+
+        &#8226; 6 min read
+    </p>
+  </header>
+
+
+  <div>
+    <div class="toc"><span class="toctitle">Table of Contents</span><ul>
+<li><a href="#csr">В чем проблема ручного составления карты CSR?</a></li>
+<li><a href="#_1">И что, никто еще не пытался решить эту проблему?</a></li>
+<li><a href="#_2">Так зачем еще один генератор?</a></li>
+<li><a href="#corsair-csr-map-generator">CorSaiR - CSR map generator</a></li>
+<li><a href="#_3">Быстрый старт</a></li>
+</ul>
+</div>
+<p>Любой хоть немного сложный цифровой блок нуждается в точках контроля и управления. Наиболее часто применяемый подход к их организации - составить из управляющих полей и флагов слова (регистры, Control and Status Register - CSR), собрать их в некое общее адресное пространство (карту) и обеспечить интерфейс доступа к этой карте.</p>
+<p>Например, ниже адресное пространство, доступное по I2C, и один из регистров внутри RTC чипа DS1307.</p>
+<p><img alt="ds1307.png" src="../../blog/2021-09-03-corsair/ds1307.png"></p>
+<p>Другой пример - микроконтроллеры, где IP-блоки внутри имеют персональные наборы контрольно-статусных регистров и соединяются, например, по AHB и APB шинам. Ниже, типичный STM32.</p>
+<p><img alt="stm32.png" src="../../blog/2021-09-03-corsair/stm32.png"></p>
+<p>Ну и в FPGA всё тоже самое - IP-блоки, шины, карты регистров.</p>
+<p>И всё бы хорошо, пока ты программист, работающий с готовыми блоками (неважно, в кремнии или в FPGA) по документации, предоставленной разрабочиками этого блока.</p>
+<p>Но всё меняется, когда надо самому разработать очередной кастомный блок на HDL, который сидел бы на APB/AHB/AXI-Lite/Avalon-MM шине и управлялся бы процессорным ядром. И тут-то мы и подходим к проблеме ручного описания карты регистров и её производных (документации, C-хедеров и пр.).</p>
+<h2 id="csr">В чем проблема ручного составления карты CSR?</h2>
+<ul>
+<li>Ручное написание RTL для реализации карты регистров это процесс довольно шаблонный и монотонный, а значит подверженный ошибкам. Однако, с другой стороны, шаблонность - это возможность автоматизации.</li>
+<li>Карта регистров так или иначе существует в разных форматах - в виде HDL кода, в виде таблиц в документации, в виде С хедеров и пр. И рано или поздно случаются ошибки синхронизации всех этих вещей между собой.</li>
+<li>Редко когда такая карта регистров одна, а значит нужно еще умножить все эти проблемы на количество разрабатываемых IP-блоков.</li>
+</ul>
+<p>Все это приводит к одному выводу - нужно использовать кодогенерацию!</p>
+<p>Когда-то я прочитал вот эту статью: <a href="https://habr.com/ru/post/263005/">Как Python и Jinja могут облегчить жизнь FPGA разработчику</a> и всё завертелось. Именно она является основным вдохновителем текущего проекта (точнее его первых прототипов).</p>
+<h2 id="_1">И что, никто еще не пытался решить эту проблему?</h2>
+<p>Конечно пытались. Скорее всего с того самого момента, когда придумали функциональные блоки, сидящие на общей шине и имеющие внутри контрольно-статусные регистры. Самый старый генератор что я сумел найти называется <a href="http://asics.chuckbenz.com/">csrGen</a>, написан на Perl и датируется 2002 годом!</p>
+<p>Индустрия предлагает следующие инструменты:</p>
+<ul>
+<li><a href="https://www.accellera.org/downloads/standards/systemrdl">SystemRDL</a> - целый язык для описания CSR курируемый Accelera</li>
+<li><a href="https://www.accellera.org/downloads/standards/ip-xact">IP-XACT</a> - стандарт для описания IP-блоков и хранения относящейся к ним мета-информации, в том числе карты регистров (тут тоже без Accelera не обошлось)</li>
+</ul>
+<p>Есть и "самоделки" разного уровня проработки кроме упомянутого выше csrGen:</p>
+<ul>
+<li><a href="https://bitvis.no/dev-tools/register-wizard/">Register Wizard</a> от Bitvis - программа для генерации VHDL и других артефактов из одного файла описания карты регистров</li>
+<li><a href="https://github.com/rggen/rggen">RgGen</a> - еще один генератор. Написан на Ruby, генерирует Verilog, SystemVerilog</li>
+<li><a href="https://docs.opentitan.org/doc/rm/register_tool/">Register Tool</a> - генератор HDL и документации на Python от проекта <a href="https://github.com/lowRISC/opentitan">OpenTitan</a></li>
+<li><a href="https://airhdl.com/index.jsp">airhdl</a> - веб-сервис, где можно в браузере собрать карту регистров и сгенерировать VHDL/SystemVerilog</li>
+</ul>
+<p>Ну и как показывает опыт, существует конечно же куча самописных костылей с разной степенью покрытия того или иного аспекта проблемы. Причем таких небольших ad hoc утилит полагаю что подавляющее количество, т.к. с одной стороны часто в проектах хочется чего-то немного нестандартного, а готовые инструменты часто не обладают достаточной гибкостью для встраивания в процесс разработки как они есть. Или другая крайность, когда достаточного довольно простого и примитивного решения, а тратить время на преодоление порога вхождения и адаптации существующих инструментов не всегда есть возможность. Ну и банальный <a href="https://en.wikipedia.org/wiki/Not_invented_here">NIH</a> тоже никто не отменял.</p>
+<h2 id="_2">Так зачем еще один генератор?</h2>
+<p>Ну, на текущий момент казалось бы и нет смысла, но не совсем.</p>
+<p>Вообще, вся это генераторная затея началась у меня довольно давно, когда выбора особо не было, а то что было найдено - не устраивало. Так что мой личный интерес - просто закрыть очередной пунктик. Ну а если кто-то ещё предпочтёт использовать мой генератор вместо написания своего решения, то это будет вообще успех.</p>
+<p>Но если отбросить личные интересы, то как мне кажется работает следующее: больше генераторов, богам генераторов, и пусть выживет достойнейший.</p>
+<p>В общем, хотелось создать такой инструмент, который:</p>
+<ul>
+<li>имел бы открытый исходный код и доступен широкому кругу лиц</li>
+<li>был бы написан на популярном языке (выше шанс что кто-то сделает свой инструмент на базе текущего, ну или будет контрибьютить)</li>
+<li>имел бы минимальный порог вхождения</li>
+<li>был бы легко расширяем и достаточно гибок (например, чтобы можно было генерировать свою особенную документацию по желанию)</li>
+</ul>
+<p>Т.е. инструмент, который был бы фактически мета-костылем среди остальных костылей, и позволял бы закрывать не только стандартные, но и более специфичные ситуации.</p>
+<h2 id="corsair-csr-map-generator">CorSaiR - CSR map generator</h2>
+<p>Некоторое время назад (конец 2020) в сообществе <a href="https://t.me/fpgasystems">FPGA-Systems</a> проскочила инициатива с разработкой open-source проектов силами местных.</p>
+<p>Я поделился своей болью по поводу генерации карт регистров. Сначала я их составлял вручную, но это быстро надоело, и я начал автоматизировать это дело. За некоторое количество лет в итоге у меня сменилось несколько поколений скриптов (которые я теперь никому в жизни не покажу). В очередной раз я решил вот теперь сделать красиво, чтобы не стыдно было поделиться с сообществом, и тут как раз подвернулась такая инициатива. В общем нашлись единомышленники и пошла разработка.</p>
+<p>За пару месяцев были реализованы почти все хотелки и разработка затомозилась на 0.3.0+ версии. Потом код лежал нетронутым порядка полугода, однако, я успел попользоваться утилитой, собрал немного фидбека со стороны (весьма ценного) и понял, что многое можно сделать проще и лучше. <a href="https://ru.wikipedia.org/wiki/KISS_(%D0%BF%D1%80%D0%B8%D0%BD%D1%86%D0%B8%D0%BF)">Keep it simple, stupid!</a></p>
+<p>Пара недель переборки и рефакторинга всего и вся, и вот она v1.0.0!</p>
+<p><img alt="corsair" src="../../blog/2021-09-03-corsair/corsair.png"></p>
+<p>Язык - Python. Основной принцип - одно описание карты CSR на входе, любое количество необходимых артефактов на выходе. Только так можно держать в полной синхронизации RTL, документацию и хидеры.</p>
+<p>Уже доступно:</p>
+<ul>
+<li>Разные текстовые форматы для описания карты регистров: JSON, YAML или текстовая таблица</li>
+<li>Генерация HDL: Verilog/VHDL модули, а также Verilog заголовочный файл и пакет SystemVerilog с параметрами и дефайнами</li>
+<li>Поддержка основных протоколов: APB, AXI-Lite, Avalon-MM</li>
+<li>Генерация документации в Markdown, AsciiDoc</li>
+<li>Генерация файлов для ПО: заголовочный файл C header, модуль Python</li>
+<li>Расширяемость:  можно использовать свои генераторы файлов</li>
+<li>API: можно составить свой уникальный workflow, используя классы корсара</li>
+</ul>
+<p>Репозиторий проекта на <a href="https://github.com/esynr3z/corsair">Github</a>.</p>
+<p>Установка через pip:</p>
+<div class="highlight"><pre><span></span><code><span class="l l-Scalar l-Scalar-Plain">python3 -m pip install -U corsair</span>
+</code></pre></div>
+
+<p>Ниже будет очень краткое изложение о том как всё работает. Если нужны детали, то README и документация на <a href="https://corsair.readthedocs.io/en/stable/">Read the Docs</a> должны помочь.</p>
+<h2 id="_3">Быстрый старт</h2>
+<p>Нужна карта регистров в одном из поддерживаемых форматов и файл конфигурации, он же скрипт сборки, <code>csrconfig</code>.</p>
+<p>Самый простой способ - сгенирировать шаблоны. Например, для YAML карты регистров:</p>
+<div class="highlight"><pre><span></span><code><span class="l l-Scalar l-Scalar-Plain">corsair -t yaml</span>
+</code></pre></div>
+
+<p>Будут созданы два файла - <code>csrconfig</code> и <code>regs.yaml</code>.</p>
+<p>Файл описания карты регистров состоит из списка регистров, где в каждый регистр входит список битовых полей, а в каждое битовое поле входит список перечислений (enums). Вот так например может выглядеть один регистр с одним полем в YAML:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">regmap</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w">   </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">CTRL</span>
+<span class="w">    </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Control register</span>
+<span class="w">    </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8</span>
+<span class="w">    </span><span class="nt">bitfields</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w">   </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">BAUD</span>
+<span class="w">        </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Baudrate value</span>
+<span class="w">        </span><span class="nt">reset</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="w">        </span><span class="nt">width</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">        </span><span class="nt">lsb</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="w">        </span><span class="nt">access</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rw</span>
+<span class="w">        </span><span class="nt">hardware</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">o</span>
+<span class="w">        </span><span class="nt">enums</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w">   </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">B9600</span>
+<span class="w">            </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">9600 baud</span>
+<span class="w">            </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w">   </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">B38400</span>
+<span class="w">            </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">38400 baud</span>
+<span class="w">            </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w">   </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">B115200</span>
+<span class="w">            </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">115200 baud</span>
+<span class="w">            </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+</code></pre></div>
+
+<p>Подробнее о карте регистров <a href="https://corsair.readthedocs.io/en/latest/regmap.html">в документации</a>.</p>
+<p>Файл конфигурации <code>csrconfig</code> является INI-подобным и имеет простую и плоскую структуру. Там есть секция с глобальными параметрами, которые влияют на процесс генерации в целом, и некоторое количество секций с целями генерации (targets), определяющими что и как будем генерировать.</p>
+<div class="highlight"><pre><span></span><code><span class="k">[globcfg]</span>
+<span class="na">data_width</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">32</span>
+<span class="na">address_width</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">16</span>
+<span class="na">register_reset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">sync_pos</span>
+
+<span class="k">[v_module]</span>
+<span class="na">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">regs.v</span>
+<span class="na">interface</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">axil</span>
+<span class="na">generator</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">Verilog</span>
+
+<span class="k">[c_header]</span>
+<span class="na">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">regs.h</span>
+<span class="na">generator</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">CHeader</span>
+</code></pre></div>
+
+<p>Подробнее о файле конфигурации <a href="https://corsair.readthedocs.io/en/latest/config.html">в документации</a>.</p>
+<p>Конфигурационный файл для корсара фактически является скриптом сборки. Достаточно в папке с <code>csrconfig</code> запустить</p>
+<div class="highlight"><pre><span></span><code><span class="l l-Scalar l-Scalar-Plain">corsair</span>
+</code></pre></div>
+
+<p>И все файлы будут сгенерированы. Вот так просто. Есть конечно еще пара-тройка ключей чтобы задать другую рабочую директорию или в явном виде указать путь до конфигурационного файла или карты регистров. Помощь по ключам запускается стандартно</p>
+<div class="highlight"><pre><span></span><code><span class="l l-Scalar l-Scalar-Plain">corsair -h</span>
+</code></pre></div>
+
+<p>Рекомендую еще полазить по папке <a href="https://github.com/esynr3z/corsair/tree/master/examples">examples</a> - там есть образцы сгенерированных файлов, примеры работы с API, ну и примеры карт регистров конечно.</p>
+<p>Как говорится stay tuned и перестаньте уже писать карты регистров вручную =)</p>
+  </div>
+  <div class="tag-cloud">
+    <p>
+      <a href="../../tag/python/">python</a>
+    </p>
+  </div>
+
+
+  <div class="neighbors">
+    <a class="btn float-left" href="../../blog/2021-07-16-ftdi-ft245/" title="FTDI USB-FIFO или режим FT245">
+      <i class="fa fa-angle-left"></i> Previous Post
+    </a>
+    <a class="btn float-right" href="../../blog/2023-12-27-positive-slack-blog-recharged/" title="positive slack blog recharged">
+      Next Post <i class="fa fa-angle-right"></i>
+    </a>
+  </div>
+
+  <div class="related-posts">
+    <h4>You might enjoy</h4>
+    <ul class="related-posts">
+      <li><a href="../../blog/2024-01-27-pip-hdl/">Using pip to Manage HDL Components</a></li>
+      <li><a href="../../blog/2021-01-17-python-hdl-sim/">Прокачиваем скрипты симуляции HDL с помощью Python и PyTest</a></li>
+    </ul>
+  </div>
+
+
+
+<!-- Giscus -->
+<script>
+    function getCurrentTheme() {
+        if (document.body.classList.contains('dark-theme')) {
+            return 'dark'
+        } else if (document.body.classList.contains('light-theme')) {
+            return 'light'
+        } else {
+            var darkThemeMatch = window.matchMedia('(prefers-color-scheme: dark)');
+            var theme = localStorage.getItem('themeOverride');
+            if (theme !== 'light' && theme !== 'dark') {
+                if (theme === 'browser' || enableAutoDetectTheme) {
+                    theme = darkThemeMatch.matches ? 'dark' : 'light';
+                } else {
+                    theme = "dark";
+                }
+            }
+            return theme;
+        }
+    }
+
+    function updateGiscusTheme() {
+        console.log("updateGiscusTheme() called");
+
+        function sendMessage(message) {
+            const iframe = document.querySelector('iframe.giscus-frame');
+            if (!iframe) return;
+            iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+
+        const currentTheme = getCurrentTheme();
+        console.log("Changing theme to ", currentTheme);
+        sendMessage({
+            setConfig: {
+                theme: currentTheme,
+            },
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const giscusAttributes = {
+            "src": "https://giscus.app/client.js",
+            "data-repo": "positive-slack/positive-slack.github.io",
+            "data-repo-id": "R_kgDOK9PAQQ",
+            "data-category": "Posts",
+            "data-category-id": "DIC_kwDOK9PAQc4CcALQ",
+            "data-mapping": "title",
+            "data-strict": "1",
+            "data-reactions-enabled": "1",
+            "data-emit-metadata": "0",
+            "data-input-position": "bottom",
+            "data-theme": getCurrentTheme(),
+            "data-lang": "en",
+            "crossorigin": "anonymous",
+            "async": "",
+        };
+
+        // Dynamically create script tag
+        const giscusScript = document.createElement("script");
+        Object.entries(giscusAttributes).forEach(([key, value]) => giscusScript.setAttribute(key, value));
+        const targetElement = document.querySelector('article');
+        targetElement.appendChild(giscusScript);
+        updateGiscusTheme()
+
+        // Update giscus theme when theme switcher is clicked
+        document.body.addEventListener('themeChange', updateGiscusTheme);
+    });
+</script>
+
+<noscript>
+    Please enable JavaScript to view comments.
+</noscript>
+<!-- End Giscus -->
+</article>
+
+<footer>
+<p>
+  &copy; 2024  - This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/deed.en_US" target="_blank">Creative Commons Attribution-ShareAlike 4.0 International License</a>
+</p>
+<p>
+Built with <a href="http://getpelican.com" target="_blank">Pelican</a> using <a href="http://bit.ly/flex-pelican" target="_blank">Flex</a> theme
+  <span class="footer-separator">|</span>
+  Switch to the <a href="javascript:void(0)" onclick="theme.switch(`dark`)">dark</a> | <a href="javascript:void(0)" onclick="theme.switch(`light`)">light</a> | <a href="javascript:void(0)" onclick="theme.switch(`browser`)">browser</a> theme
+  <script id="dark-theme-script"
+          src="../../theme/dark-theme/dark-theme.min.js"
+          data-enable-auto-detect-theme="True"
+          data-default-theme="dark"
+          type="text/javascript">
+  </script>
+</p><p>
+  <a rel="license"
+     href="http://creativecommons.org/licenses/by-sa/4.0/"
+     target="_blank">
+    <img alt="Creative Commons License"
+         title="Creative Commons License"
+         style="border-width:0"
+           src="https://i.creativecommons.org/l/by-sa/4.0/80x15.png"
+         width="80"
+         height="15"/>
+  </a>
+</p>  <p>DISCLAIMER. Everything I share here are my own thoughts and opinions. They're not connected to my employer in any way.</p>
+</footer>  </main>
+
+<script type="application/ld+json">
+{
+  "@context" : "http://schema.org",
+  "@type" : "Blog",
+  "name": " positive slack blog ",
+  "url" : "../..",
+  "image": "/assets/logo.jpg",
+  "description": "digital design, verification and collaterals"
+}
+</script>
+</body>
+</html>

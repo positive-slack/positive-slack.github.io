@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>positive slack blog - General</title><link href="https://positive-slack.github.io/" rel="alternate"></link><link href="https://positive-slack.github.io/feeds/general.atom.xml" rel="self"></link><id>https://positive-slack.github.io/</id><updated>2024-01-27T11:40:56+03:00</updated><subtitle>digital design, verification and collaterals</subtitle><entry><title>positive slack blog recharged</title><link href="https://positive-slack.github.io/blog/2023-12-27-positive-slack-blog-recharged/" rel="alternate"></link><published>2023-12-26T10:20:00+03:00</published><updated>2024-01-27T11:40:56+03:00</updated><author><name>esynr3z</name></author><id>tag:positive-slack.github.io,2023-12-26:/blog/2023-12-27-positive-slack-blog-recharged/</id><summary type="html">&lt;p&gt;I refactored my existing blog and move it to Pelican.&lt;/p&gt;</summary><content type="html">&lt;p&gt;My previous version of the blog used &lt;a href="https://jekyllrb.com/"&gt;Jekyll&lt;/a&gt; and it was quite tedious for me to deal with Ruby ecosystem. So I had decided to find something more suitable for me and found &lt;a href="https://getpelican.com/"&gt;Pelican&lt;/a&gt;, which is also a Static Site Generator but written in Python.&lt;/p&gt;
+&lt;p&gt;So here it is - my blog version 2.0! Now it is much simpler to configure, setup and fill it with content, so I hope it will facilitate me in getting new posts done.&lt;/p&gt;
+&lt;p&gt;Stay tuned!&lt;/p&gt;
+&lt;p&gt;P.S. Some usefull links that helped me a lot during blog refactoring:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href="https://getpelican.com/"&gt;getpelican&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://docs.getpelican.com/"&gt;Pelican docs&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://dev.to/tiffanie_boreux/the-flying-start-of-your-blog-with-pelican-and-github-pages-531l"&gt;Super useful guide to setup pelican blog&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://jackdewinter.github.io/2019/09/29/fine-tuning-pelican-setting-up-the-landing-page"&gt;Another useful guide&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://alexgonzalezc.dev/posts/github-comment-system.html"&gt;Setup comments via giscus&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;</content><category term="General"></category><category term="blog"></category></entry></feed>
